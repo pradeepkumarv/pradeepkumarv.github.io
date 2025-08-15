@@ -2,42 +2,62 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Login Test</title>
+  <title>Supabase Auth Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <h2>Login</h2>
-  <form id="login-form">
-    <input type="email" id="login-email" placeholder="Email" required><br>
-    <input type="password" id="login-password" placeholder="Password" required><br>
-    <button type="submit">Login</button>
-  </form>
-  <p id="message"></p>
+  <div id="auth-section">
+    <h2>Login</h2>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" required><br>
+      <input type="password" id="login-password" placeholder="Password" required><br>
+      <button type="submit">Login</button>
+    </form>
+    <p id="message"></p>
+  </div>
+
+  <div id="app-section" style="display:none;">
+    <h2>Welcome!</h2>
+    <p id="user-email"></p>
+    <button id="logout-btn">Logout</button>
+    <h3>Messages (Protected Data)</h3>
+    <ul id="messages-list"></ul>
+  </div>
 
   <script>
     const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    async function checkUserSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        showApp(session.user);
+        loadMessages();
+      }
+    }
+
+    function showApp(user) {
+      document.getElementById('auth-section').style.display = "none";
+      document.getElementById('app-section').style.display = "block";
+      document.getElementById('user-email').textContent = "Logged in as: " + user.email;
+    }
+
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
       if (error) {
         document.getElementById('message').textContent = "Error: " + error.message;
         document.getElementById('message').style.color = "red";
       } else {
-        document.getElementById('message').textContent = "Login successful!";
-        document.getElementById('message').style.color = "green";
-        console.log("User data:", data);
+        document.getElementById('message').textContent = "";
+        showApp(data.user);
+        loadMessages();
       }
     });
-  </script>
-</body>
-</html>
+
+    d
