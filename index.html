@@ -1,62 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase Login</title>
+  <meta charset="UTF-8">
+  <title>Login Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
-    <button onclick="login()">Login</button>
+  <h2>Login</h2>
+  <form id="login-form">
+    <input type="email" id="login-email" placeholder="Email" required><br>
+    <input type="password" id="login-password" placeholder="Password" required><br>
+    <button type="submit">Login</button>
+  </form>
+  <p id="message"></p>
 
-    <h2>Sign Up</h2>
-    <input type="email" id="signup-email" placeholder="Email"><br><br>
-    <input type="password" id="signup-password" placeholder="Password"><br><br>
-    <button onclick="signup()">Sign Up</button>
+  <script>
+    const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <!-- Load Supabase JS client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script>
-        // Replace with your real values
-        const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
 
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) {
-                alert(error.message);
-            } else {
-                alert('Login successful!');
-                console.log(data);
-            }
-        }
-
-        async function signup() {
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password
-            });
-
-            if (error) {
-                alert(error.message);
-            } else {
-                alert('Sign-up successful! Check your email to confirm.');
-                console.log(data);
-            }
-        }
-    </script>
+      if (error) {
+        document.getElementById('message').textContent = "Error: " + error.message;
+        document.getElementById('message').style.color = "red";
+      } else {
+        document.getElementById('message').textContent = "Login successful!";
+        document.getElementById('message').style.color = "green";
+        console.log("User data:", data);
+      }
+    });
+  </script>
 </body>
 </html>
