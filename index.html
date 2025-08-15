@@ -6,6 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+  <!-- Auth Section -->
   <div id="auth-section">
     <h2>Login</h2>
     <form id="login-form">
@@ -14,12 +15,22 @@
       <button type="submit">Login</button>
     </form>
     <p id="message"></p>
+
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <input type="email" id="signup-email" placeholder="Email" required><br>
+      <input type="password" id="signup-password" placeholder="Password" required><br>
+      <button type="submit">Sign Up</button>
+    </form>
+    <p id="signup-message"></p>
   </div>
 
+  <!-- App Section -->
   <div id="app-section" style="display:none;">
     <h2>Welcome!</h2>
     <p id="user-email"></p>
     <button id="logout-btn">Logout</button>
+
     <h3>Messages (Protected Data)</h3>
     <ul id="messages-list"></ul>
   </div>
@@ -29,6 +40,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Check if already logged in
     async function checkUserSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
@@ -37,12 +49,14 @@
       }
     }
 
+    // Show app UI
     function showApp(user) {
       document.getElementById('auth-section').style.display = "none";
       document.getElementById('app-section').style.display = "block";
       document.getElementById('user-email').textContent = "Logged in as: " + user.email;
     }
 
+    // Login event
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
@@ -60,4 +74,54 @@
       }
     });
 
-    d
+    // Sign Up event
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+      if (error) {
+        document.getElementById('signup-message').textContent = "Error: " + error.message;
+        document.getElementById('signup-message').style.color = "red";
+      } else {
+        document.getElementById('signup-message').textContent = "Sign up successful! Check your email for confirmation.";
+        document.getElementById('signup-message').style.color = "green";
+
+        // If email confirmation is disabled in Supabase settings, auto login
+        if (data.user && data.session) {
+          showApp(data.user);
+          loadMessages();
+        }
+      }
+    });
+
+    // Logout event
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      document.getElementById('auth-section').style.display = "block";
+      document.getElementById('app-section').style.display = "none";
+    });
+
+    // Load protected data
+    async function loadMessages() {
+      const { data, error } = await supabaseClient.from('messages').select('*');
+      const list = document.getElementById('messages-list');
+      list.innerHTML = "";
+      if (error) {
+        list.innerHTML = "<li>Error loading messages: " + error.message + "</li>";
+      } else {
+        data.forEach(msg => {
+          const li = document.createElement('li');
+          li.textContent = msg.content; // Change 'content' to your column name
+          list.appendChild(li);
+        });
+      }
+    }
+
+    // On page load
+    checkUserSession();
+  </script>
+</body>
+</html>
