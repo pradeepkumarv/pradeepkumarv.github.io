@@ -1,74 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Investment Dashboard - Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
-      padding: 50px;
-    }
-    .login-box {
-      background: white;
-      padding: 30px;
-      max-width: 300px;
-      margin: auto;
-      border-radius: 10px;
-      box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 90%;
-      padding: 10px;
-      margin: 5px 0;
-    }
-    button {
-      padding: 10px;
-      background: #0077cc;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #005fa3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Login</title>
 </head>
 <body>
-  <h1>Login to Your Dashboard</h1>
-  <div class="login-box">
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="password" placeholder="Password"><br>
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
     <button onclick="login()">Login</button>
-    <p id="message" style="color:red;"></p>
-  </div>
 
-  <script>
-    // 🔹 Replace with your own Supabase details
-    const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3FwY";
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email"><br><br>
+    <input type="password" id="signup-password" placeholder="Password"><br><br>
+    <button onclick="signup()">Sign Up</button>
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Load Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // Replace with your real values
+        const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
-      if (error) {
-        document.getElementById("message").textContent = error.message;
-      } else {
-        document.getElementById("message").style.color = "green";
-        document.getElementById("message").textContent = "Login successful!";
-        // Redirect to dashboard page
-        window.location.href = "dashboard.html";
-      }
-    }
-  </script>
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Login successful!');
+                console.log(data);
+            }
+        }
+
+        async function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password
+            });
+
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Sign-up successful! Check your email to confirm.');
+                console.log(data);
+            }
+        }
+    </script>
 </body>
 </html>
