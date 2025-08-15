@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Page Title & Basic SEO -->
+    <title>Sample Webpage</title>
+    <meta name="description" content="A clean, responsive sample webpage built with HTML, CSS, and a pinch of JavaScript." />
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ---------- CSS RESET ---------- */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ---------- GENERAL STYLES ---------- */
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f7f9fc;
+        }
+        h1, h2 { color: #1a202c; }
+
+        a    { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ---------- LAYOUT ---------- */
+        header, footer {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 1.2rem 0;
+            text-align: center;
+        }
+
+        nav ul      { list-style: none; display: flex; gap: 1.5rem; justify-content: center; margin: .5rem 0; }
+        nav li a    { color: #f1f5f9; font-weight: 600; }
+
+        .container  { width: min(90%, 1100px); margin-inline: auto; }
+
+        /* ---------- HERO SECTION ---------- */
+        .hero {
+            display: grid;
+            place-items: center;
+            text-align: center;
+            padding: 4rem 1rem 3rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #7dd3fc 100%);
+            color: #f8fafc;
+        }
+        .hero h1    { font-size: clamp(2rem, 6vw, 3rem); margin-bottom: .8rem; }
+        .hero p     { max-width: 40ch; }
+
+        /* ---------- MAIN CONTENT ---------- */
+        .grid {
+            display: grid;
+            gap: 2rem;
+            padding: 3rem 0;
+        }
+        @media (min-width: 700px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: .5rem;
+            padding: 1.8rem 1.4rem;
+            box-shadow: 0 6px 18px rgba(0,0,0,.06);
+            transition: transform .25s ease;
+        }
+        .card:hover { transform: translateY(-6px); }
+
+        /* ---------- FOOTER ---------- */
+        footer p { font-size: .875rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ========== HEADER & NAVIGATION ========== -->
+    <header>
+        <h1>My Sample Webpage</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section id="home" class="hero">
+        <div>
+            <h1>Build Something Great</h1>
+            <p>A minimal, fully-responsive starter page to help you kick-start your next web project.</p>
+        </div>
+    </section>
+
+    <!-- ========== FEATURES GRID ========== -->
+    <main class="container">
+        <section id="features" class="grid">
+            <article class="card">
+                <h2>Fast & Lightweight</h2>
+                <p>Pure HTML and CSS, no heavy frameworks—just clean code that loads quickly.</p>
+            </article>
+
+            <article class="card">
+                <h2>Responsive Layout</h2>
+                <p>The flexible grid adapts gracefully to phones, tablets, and desktop screens.</p>
+            </article>
+
+            <article class="card">
+                <h2>Easy to Customize</h2>
+                <p>Edit colors, fonts, and content in minutes to match your personal style or brand.</p>
+            </article>
+        </section>
+    </main>
+
+    <!-- ========== CONTACT SECTION ========== -->
+    <section id="contact" class="container" style="padding-bottom: 3rem;">
+        <h2>Contact</h2>
+        <form id="contactForm" style="margin-top: 1.2rem;">
+            <label for="email">Email:</label><br />
+            <input type="email" id="email" required style="padding:.5rem; width:100%; max-width:400px; margin: .5rem 0 1rem;" /><br />
+            <button type="submit" style="padding:.6rem 1.2rem; border:none; background:#2563eb; color:#fff; border-radius:4px; cursor:pointer;">
+                Send
+            </button>
+        </form>
+        <p id="statusMsg" style="margin-top:1rem; color:#16a34a; display:none;">Thanks for reaching out!</p>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer>
+        <p>&copy; 2025 Your Name. All rights reserved.</p>
+    </footer>
+
+    <!-- ========== BASIC JAVASCRIPT ========== -->
+    <script>
+        const form = document.getElementById('contactForm');
+        const msg  = document.getElementById('statusMsg');
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            msg.style.display = 'block';
+            form.reset();
+        });
+    </script>
+</body>
+</html>
