@@ -1,6 +1,12 @@
-// Fetch investments data
+// Initialize Supabase
+const { createClient } = supabase;
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY"; 
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Fetch investments and render
 async function fetchInvestments() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("investments")
     .select("*");
 
@@ -25,5 +31,5 @@ async function fetchInvestments() {
   });
 }
 
-// Run on page load
+// Load data when page opens
 fetchInvestments();
