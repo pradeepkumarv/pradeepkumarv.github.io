@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Supabase Auth Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Load Supabase config first -->
+  <script type="module" src="./supabaseClient.js"></script>
 </head>
 <body>
   <!-- Auth Section -->
@@ -35,10 +37,9 @@
     <ul id="messages-list"></ul>
   </div>
 
-  <script>
-    const SUPABASE_URL = "https://dobiarrtabqiozfitsoz.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYmlhcnJ0YWJxaW96Zml0c296Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNjk0MTcsImV4cCI6MjA3MDg0NTQxN30.JTIdjABW7pceVfBWETKA9tnGFaBxQW4mf3VFHtWe3Fw";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- Main App Script -->
+  <script type="module">
+    import { supabaseClient } from './script.js';
 
     // Check if already logged in
     async function checkUserSession() {
@@ -49,14 +50,12 @@
       }
     }
 
-    // Show app UI
     function showApp(user) {
       document.getElementById('auth-section').style.display = "none";
       document.getElementById('app-section').style.display = "block";
       document.getElementById('user-email').textContent = "Logged in as: " + user.email;
     }
 
-    // Login event
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
@@ -74,7 +73,6 @@
       }
     });
 
-    // Sign Up event
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('signup-email').value;
@@ -86,10 +84,9 @@
         document.getElementById('signup-message').textContent = "Error: " + error.message;
         document.getElementById('signup-message').style.color = "red";
       } else {
-        document.getElementById('signup-message').textContent = "Sign up successful! Check your email for confirmation.";
+        document.getElementById('signup-message').textContent = "Sign up successful! Check your email.";
         document.getElementById('signup-message').style.color = "green";
 
-        // If email confirmation is disabled in Supabase settings, auto login
         if (data.user && data.session) {
           showApp(data.user);
           loadMessages();
@@ -97,14 +94,12 @@
       }
     });
 
-    // Logout event
     document.getElementById('logout-btn').addEventListener('click', async () => {
       await supabaseClient.auth.signOut();
       document.getElementById('auth-section').style.display = "block";
       document.getElementById('app-section').style.display = "none";
     });
 
-    // Load protected data
     async function loadMessages() {
       const { data, error } = await supabaseClient.from('messages').select('*');
       const list = document.getElementById('messages-list');
@@ -114,13 +109,12 @@
       } else {
         data.forEach(msg => {
           const li = document.createElement('li');
-          li.textContent = msg.content; // Change 'content' to your column name
+          li.textContent = msg.content;
           list.appendChild(li);
         });
       }
     }
 
-    // On page load
     checkUserSession();
   </script>
 </body>
