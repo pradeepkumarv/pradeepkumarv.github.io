@@ -1,121 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Supabase Auth Demo</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Load Supabase config first -->
-  <script type="module" src="./script.js"></script>
+  <title>Family Investment Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="./dashboard.js"></script>
 </head>
-<body>
-  <!-- Auth Section -->
-  <div id="auth-section">
-    <h2>Login</h2>
-    <form id="login-form">
-      <input type="email" id="login-email" placeholder="Email" required><br>
-      <input type="password" id="login-password" placeholder="Password" required><br>
-      <button type="submit">Login</button>
-    </form>
-    <p id="message"></p>
+<body class="bg-gray-100 font-sans">
+  <!-- Navbar -->
+  <nav class="bg-blue-600 text-white p-4 flex justify-between">
+    <h1 class="text-xl font-bold">Family Wealth Dashboard</h1>
+    <button id="logout-btn" class="bg-red-500 px-3 py-1 rounded">Logout</button>
+  </nav>
 
-    <h2>Sign Up</h2>
-    <form id="signup-form">
-      <input type="email" id="signup-email" placeholder="Email" required><br>
-      <input type="password" id="signup-password" placeholder="Password" required><br>
-      <button type="submit">Sign Up</button>
-    </form>
-    <p id="signup-message"></p>
+  <!-- Dashboard -->
+  <div class="max-w-6xl mx-auto p-6">
+    <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Equity -->
+      <div class="bg-white p-4 rounded shadow">
+        <h3 class="text-lg font-semibold">Equity</h3>
+        <p id="equity-balance" class="text-2xl text-blue-600">₹0</p>
+      </div>
+
+      <!-- Mutual Funds -->
+      <div class="bg-white p-4 rounded shadow">
+        <h3 class="text-lg font-semibold">Mutual Funds</h3>
+        <p id="mf-balance" class="text-2xl text-green-600">₹0</p>
+      </div>
+
+      <!-- Savings -->
+      <div class="bg-white p-4 rounded shadow">
+        <h3 class="text-lg font-semibold">Savings</h3>
+        <p id="savings-balance" class="text-2xl text-purple-600">₹0</p>
+      </div>
+
+      <!-- FD -->
+      <div class="bg-white p-4 rounded shadow">
+        <h3 class="text-lg font-semibold">Fixed Deposits</h3>
+        <p id="fd-balance" class="text-2xl text-orange-600">₹0</p>
+      </div>
+
+      <!-- Insurance -->
+      <div class="bg-white p-4 rounded shadow col-span-1 md:col-span-2">
+        <h3 class="text-lg font-semibold">Insurance Policies</h3>
+        <ul id="insurance-list" class="list-disc pl-6"></ul>
+      </div>
+    </div>
   </div>
-
-  <!-- App Section -->
-  <div id="app-section" style="display:none;">
-    <h2>Welcome!</h2>
-    <p id="user-email"></p>
-    <button id="logout-btn">Logout</button>
-
-    <h3>Messages (Protected Data)</h3>
-    <ul id="messages-list"></ul>
-  </div>
-
-  <!-- Main App Script -->
-  <script type="module">
-    import { supabaseClient } from './script.js';
-
-    // Check if already logged in
-    async function checkUserSession() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        showApp(session.user);
-        loadMessages();
-      }
-    }
-
-    function showApp(user) {
-      document.getElementById('auth-section').style.display = "none";
-      document.getElementById('app-section').style.display = "block";
-      document.getElementById('user-email').textContent = "Logged in as: " + user.email;
-    }
-
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        document.getElementById('message').textContent = "Error: " + error.message;
-        document.getElementById('message').style.color = "red";
-      } else {
-        document.getElementById('message').textContent = "";
-        showApp(data.user);
-        loadMessages();
-      }
-    });
-
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-
-      if (error) {
-        document.getElementById('signup-message').textContent = "Error: " + error.message;
-        document.getElementById('signup-message').style.color = "red";
-      } else {
-        document.getElementById('signup-message').textContent = "Sign up successful! Check your email.";
-        document.getElementById('signup-message').style.color = "green";
-
-        if (data.user && data.session) {
-          showApp(data.user);
-          loadMessages();
-        }
-      }
-    });
-
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      await supabaseClient.auth.signOut();
-      document.getElementById('auth-section').style.display = "block";
-      document.getElementById('app-section').style.display = "none";
-    });
-
-    async function loadMessages() {
-      const { data, error } = await supabaseClient.from('messages').select('*');
-      const list = document.getElementById('messages-list');
-      list.innerHTML = "";
-      if (error) {
-        list.innerHTML = "<li>Error loading messages: " + error.message + "</li>";
-      } else {
-        data.forEach(msg => {
-          const li = document.createElement('li');
-          li.textContent = msg.content;
-          list.appendChild(li);
-        });
-      }
-    }
-
-    checkUserSession();
-  </script>
 </body>
 </html>
