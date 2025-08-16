@@ -1,117 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Login | Investment Dashboard</title>
-  <script type="module" src="./script.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .auth-box {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      width: 320px;
-    }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #3B82F6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover {
-      background: #2563EB;
-    }
-    .switch {
-      margin-top: 12px;
-      text-align: center;
-      font-size: 14px;
-    }
-    .switch a {
-      color: #3B82F6;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div class="auth-box">
-    <h2 id="form-title">Login</h2>
-    <form id="auth-form">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit" id="auth-button">Login</button>
-    </form>
-    <div class="switch">
-      <span id="toggle-text">Don't have an account? <a id="toggle-link">Sign up</a></span>
-    </div>
-  </div>
+<script type="module">
+import { supabase } from './script.js';
 
-  <script type="module">
-    import { supabaseClient } from './script.js';
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-    let isLogin = true;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
 
-    // Toggle between Login / Signup
-    const formTitle = document.getElementById("form-title");
-    const authButton = document.getElementById("auth-button");
-    const toggleText = document.getElementById("toggle-text");
-    const toggleLink = document.getElementById("toggle-link");
-
-    toggleLink.addEventListener("click", () => {
-      isLogin = !isLogin;
-      if (isLogin) {
-        formTitle.textContent = "Login";
-        authButton.textContent = "Login";
-        toggleText.innerHTML = `Don't have an account? <a id="toggle-link">Sign up</a>`;
-      } else {
-        formTitle.textContent = "Sign Up";
-        authButton.textContent = "Sign Up";
-        toggleText.innerHTML = `Already have an account? <a id="toggle-link">Login</a>`;
-      }
-    });
-
-    // Handle form submit
-    document.getElementById("auth-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      let response;
-      if (isLogin) {
-        response = await supabaseClient.auth.signInWithPassword({ email, password });
-      } else {
-        response = await supabaseClient.auth.signUp({ email, password });
-      }
-
-      if (response.error) {
-        alert(response.error.message);
-      } else {
-        window.location.href = "dashboard.html";
-      }
-    });
-  </script>
-</body>
-</html>
+  if (error) {
+    alert("Login failed: " + error.message);
+  } else {
+    // ✅ Redirect after successful login
+    window.location.href = "dashboard.html";
+  }
+});
+</script>
