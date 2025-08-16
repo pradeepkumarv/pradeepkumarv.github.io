@@ -1,47 +1,29 @@
-import { supabase } from './script.js';
-
-// Insert new investment
-document.getElementById("investment-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const name = document.getElementById("name").value;
-  const type = document.getElementById("type").value;
-  const amount = parseFloat(document.getElementById("amount").value);
-
+// Fetch investments data
+async function fetchInvestments() {
   const { data, error } = await supabase
     .from("investments")
-    .insert([{ 
-      name, 
-      type, 
-      amount_invested: amount, 
-      last_updated: new Date() 
-    }]);
+    .select("*");
 
   if (error) {
-    alert("Insert failed: " + error.message);
-  } else {
-    alert("Investment added!");
-    loadInvestments();
-  }
-});
-
-// Load all investments
-async function loadInvestments() {
-  const { data, error } = await supabase
-    .from("investments")
-    .select("*")
-    .order("last_updated", { ascending: false });
-
-  if (error) {
-    console.error("Fetch error:", error.message);
+    console.error("Error fetching data:", error.message);
+    alert("Error loading data");
     return;
   }
 
-  const list = document.getElementById("investment-list");
-  list.innerHTML = "";
-  data.forEach(inv => {
-    list.innerHTML += `<p>${inv.name} - ${inv.type} - ₹${inv.amount_invested}</p>`;
+  const tableBody = document.getElementById("investments-body");
+  tableBody.innerHTML = "";
+
+  data.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="px-4 py-2">${row.id}</td>
+      <td class="px-4 py-2">${row.name}</td>
+      <td class="px-4 py-2">${row.type}</td>
+      <td class="px-4 py-2">${row.amount}</td>
+    `;
+    tableBody.appendChild(tr);
   });
 }
 
 // Run on page load
-loadInvestments();
+fetchInvestments();
