@@ -51,7 +51,7 @@ btnRequestOtp?.addEventListener('click', async () => {
   try {
     const payload = { clientId: username, password, mobile };
     // If your backend expects a different body (e.g. username/password keys) adapt server accordingly.
-    const r = await callApi('/api/request-otp', {
+    const r = await callApi('https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app/api/request-otp)', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
