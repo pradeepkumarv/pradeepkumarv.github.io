@@ -1,8 +1,14 @@
-// api/hdfc/callback.js
 import { serialize } from 'cookie';
 
+function setCors(res) {
+  const FRONTEND = process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
 export default async function handler(req, res) {
-  setCorsHeaders(res);
+  setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
@@ -12,13 +18,12 @@ export default async function handler(req, res) {
       return res.redirect((process.env.FRONTEND_URL || '/') + '/?auth_error=missing_token');
     }
 
-    const tokenUrl = process.env.HDFC_TOKEN_EXCHANGE_URL; // set in Vercel env
+    const tokenUrl = process.env.HDFC_TOKEN_EXCHANGE_URL;
     if (!tokenUrl) throw new Error('HDFC_TOKEN_EXCHANGE_URL not set');
 
-    // Build the body exactly as HDFC docs require (JSON or form-url-encoded)
     const body = {
       api_key: process.env.HDFC_API_KEY,
-      api_secret: process.env.HDFC_API_SECRET, // if required
+      api_secret: process.env.HDFC_API_SECRET,
       request_token: incomingToken
     };
 
@@ -34,7 +39,6 @@ export default async function handler(req, res) {
       return res.redirect((process.env.FRONTEND_URL || '/') + '/?auth_error=exchange_failed');
     }
 
-    // adjust field name to what HDFC responds with
     const accessToken = tokenJson.access_token || tokenJson.token || tokenJson.session_token;
     const expiresIn = tokenJson.expires_in ? Number(tokenJson.expires_in) : 3600;
     if (!accessToken) {
@@ -51,7 +55,6 @@ export default async function handler(req, res) {
 
     res.setHeader('Set-Cookie', cookie);
     return res.redirect(302, (process.env.FRONTEND_URL || '/') + '/?hdfc=success');
-
   } catch (err) {
     console.error('callback error', err);
     return res.redirect((process.env.FRONTEND_URL || '/') + '/?auth_error=server_error');
