@@ -20,5 +20,6 @@ function setCors(res) {
 export default function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
   res.status(200).json({ status: 'ok', timestamp: Date.now() });
 }
