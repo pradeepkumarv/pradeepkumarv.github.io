@@ -11,8 +11,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
-    const { clientId, mobile } = req.body;
-    if (!clientId || !mobile) return res.status(400).json({ error: 'missing clientId or mobile' });
+  //  const { clientId, mobile } = req.body;
+   // if (!clientId || !mobile) return res.status(400).json({ error: 'missing clientId or mobile' });
 
     const HDFC_REQUEST_OTP_URL = process.env.HDFC_REQUEST_OTP_URL || 'https://developer.hdfcsec.com/oapi/v1/login/request_otp';
 
