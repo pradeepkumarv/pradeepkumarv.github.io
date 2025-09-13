@@ -1,37 +1,39 @@
+import { serialize } from 'cookie';
+
 function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app');
+  const FRONTEND = process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND);
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-import { serialize } from 'cookie';
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({error:'method not allowed'});
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+
   try {
     const { username, otp } = req.body;
-    if (!username || !otp) return res.status(400).json({ error:'username and otp required' });
+    if (!username || !otp) return res.status(400).json({ error: 'username and otp required' });
 
-    const HDFC_VALIDATE_2FA_URL = process.env.HDFC_VALIDATE_2FA_URL; // e.g. https://developer.hdfcsec.com/oapi/v1/login/validate
+    const HDFC_VALIDATE_2FA_URL = process.env.HDFC_VALIDATE_2FA_URL || 'https://developer.hdfcsec.com/oapi/v1/login/validate';
     const apiKey = process.env.HDFC_API_KEY;
 
     const payload = {
       api_key: apiKey,
       username,
       otp
-      // include request_token/token_id if doc requires it
     };
 
     const hRes = await fetch(HDFC_VALIDATE_2FA_URL, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const body = await hRes.json();
-    if (!hRes.ok) return res.status(hRes.status).json({ error:'hdfc validate failed', details: body });
+    if (!hRes.ok) return res.status(hRes.status).json({ error: 'hdfc validate failed', details: body });
 
-    // Docs indicate the response contains access_token/session_token — adapt if field name differs
     const accessToken = body.access_token || body.token || body.session_token || null;
     const expiresIn = body.expires_in ? Number(body.expires_in) : 3600;
 
@@ -43,10 +45,9 @@ export default async function handler(req, res) {
         maxAge: expiresIn
       });
       res.setHeader('Set-Cookie', cookie);
-      return res.status(200).json({ ok:true, tokenStored: true, raw: body });
+      return res.status(200).json({ ok: true, tokenStored: true, raw: body });
     } else {
-      // return response to inspect if no token returned
-      return res.status(200).json({ ok:true, raw: body });
+      return res.status(200).json({ ok: true, raw: body });
     }
   } catch (err) {
     console.error(err);
