@@ -1,6 +1,6 @@
 // frontend.js
 // IMPORTANT: set your Vercel URL here (the serverless functions must be hosted there)
-const API_BASE = 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+const API_BASE = 'https://pradeepkumarv-github-io.vercel.app/';
 
 const out = document.getElementById('out');
 const usernameEl = document.getElementById('username');
