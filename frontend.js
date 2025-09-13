@@ -1,3 +1,5 @@
+const API_BASE = 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+
 const out = document.getElementById('out');
 const clientIdInput = document.getElementById('clientId');
 const mobileInput = document.getElementById('mobile');
