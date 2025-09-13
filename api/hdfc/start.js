@@ -1,4 +1,12 @@
 // api/hdfc/start.js
+// server side (api/hdfc/start.js)
+const authBase = process.env.HDFC_AUTH_URL; // https://developer.hdfcsec.com/oapi/v1/authorise
+const redirectUri = encodeURIComponent(process.env.FRONTEND_URL + '/api/hdfc/callback');
+const apiKey = encodeURIComponent(process.env.HDFC_API_KEY);
+
+// example params shown in HDFC docs: api_key, token_id, consent, request_token
+const authUrl = `${authBase}?api_key=${apiKey}&token_id=${tokenId}&consent=${consent}&request_token=${requestToken}&redirect_uri=${redirectUri}`;
+
 export default function handler(req, res) {
   setCorsHeaders(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
