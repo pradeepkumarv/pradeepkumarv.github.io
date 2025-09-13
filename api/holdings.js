@@ -2,7 +2,7 @@ import cookie from 'cookie';
 
 function setCors(res) {
   const allowedOrigins = [
-    https://pradeepkumarv.github.io',          // your frontend (GitHub Pages)
+    'https://pradeepkumarv.github.io',          // your frontend (GitHub Pages)
     'https://pradeepkumarv-github-io.vercel.app' // your backend domain
   ]
    const origin = res.req?.headers?.origin || ''; // fallback if available
