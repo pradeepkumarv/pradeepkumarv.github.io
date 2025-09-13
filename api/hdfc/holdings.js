@@ -1,8 +1,14 @@
-// api/hdfc/holdings.js
 import cookie from 'cookie';
 
+function setCors(res) {
+  const FRONTEND = process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
 export default async function handler(req, res) {
-  setCorsHeaders(res);
+  setCors(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
 
@@ -19,7 +25,7 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
-        'x-api-key': process.env.HDFC_API_KEY // if required
+        'x-api-key': process.env.HDFC_API_KEY
       }
     });
 
@@ -27,7 +33,6 @@ export default async function handler(req, res) {
     if (!hRes.ok) return res.status(hRes.status).json({ error: 'hdfc error', details: data });
 
     return res.status(200).json({ ok: true, holdings: data });
-
   } catch (err) {
     console.error('holdings error', err);
     return res.status(500).json({ error: String(err) });
