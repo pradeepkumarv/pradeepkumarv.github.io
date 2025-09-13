@@ -1,9 +1,9 @@
 function setCors(res) {
   const allowedOrigins = [
-    'https://pradeepkumarv.github.io',          // your frontend (GitHub Pages)
-    'https://pradeepkumarv-github-io.vercel.app' // your backend domain
-  ]
-   const origin = res.req?.headers?.origin || ''; // fallback if available
+    'https://pradeepkumarv.github.io',
+    'https://pradeepkumarv-github-io.vercel.app'
+  ];
+  const origin = res.req?.headers?.origin || '';
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
@@ -14,24 +14,27 @@ function setCors(res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
-
 export default async function handler(req, res) {
   setCors(res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
-  //  const { clientId, mobile } = req.body;
-   // if (!clientId || !mobile) return res.status(400).json({ error: 'missing clientId or mobile' });
+  if (req.method === 'OPTIONS') return res.status(204).end();  // <---- important
 
-    const HDFC_REQUEST_OTP_URL = process.env.HDFC_REQUEST_OTP_URL || 'https://developer.hdfcsec.com/oapi/v1/login/request_otp';
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+
+  try {
+    const { clientId, password, mobile } = req.body;
+    if (!clientId || !password) {
+      return res.status(400).json({ error: 'missing clientId or password' });
+    }
+
+    const HDFC_REQUEST_OTP_URL = process.env.HDFC_REQUEST_OTP_URL;
 
     const body = {
       api_key: process.env.HDFC_API_KEY,
       client_id: clientId,
-      mobile: mobile
+      password,
+      mobile
     };
 
-    // Use built-in fetch (no node-fetch import)
     const hRes = await fetch(HDFC_REQUEST_OTP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
