@@ -1,42 +1,36 @@
 function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app');
+  const FRONTEND = process.env.FRONTEND_URL || 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', FRONTEND);
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
     const { clientId, mobile } = req.body;
     if (!clientId || !mobile) return res.status(400).json({ error: 'missing clientId or mobile' });
 
-    // === Replace this with the real HDFC request OTP URL and body ===
     const HDFC_REQUEST_OTP_URL = process.env.HDFC_REQUEST_OTP_URL || 'https://developer.hdfcsec.com/oapi/v1/login/request_otp';
 
-    // Example JSON body - change keys as per HDFC doc
     const body = {
       api_key: process.env.HDFC_API_KEY,
       client_id: clientId,
       mobile: mobile
     };
 
+    // Use built-in fetch (no node-fetch import)
     const hRes = await fetch(HDFC_REQUEST_OTP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      timeout: 15000
+      body: JSON.stringify(body)
     });
 
     const hJson = await hRes.json();
+    if (!hRes.ok) return res.status(hRes.status).json({ error: 'hdfc error', details: hJson });
 
-    // HDFC will typically return success + some request token or temporary id — return to frontend
-    if (!hRes.ok) {
-      return res.status(hRes.status).json({ error: 'hdfc error', details: hJson });
-    }
-
-    // Example: return request_token to client (or store in server side if required)
     return res.status(200).json({ ok: true, hdfc: hJson });
   } catch (err) {
     console.error(err);
