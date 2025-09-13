@@ -1,68 +1,33 @@
+// frontend.js
 const API_BASE = 'https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app';
 
-const out = document.getElementById('out');
-const clientIdInput = document.getElementById('clientId');
-const mobileInput = document.getElementById('mobile');
-const otpInput = document.getElementById('otp');
-const btnRequestOtp = document.getElementById('btnRequestOtp');
-const btnValidateOtp = document.getElementById('btnValidateOtp');
-const btnGetHoldings = document.getElementById('btnGetHoldings');
-const otpSection = document.getElementById('otpSection');
-
-function show(o){ out.textContent = JSON.stringify(o, null, 2); }
-
-btnRequestOtp.addEventListener('click', async () => {
-  const clientId = clientIdInput.value.trim();
-  const mobile = mobileInput.value.trim();
-  if(!clientId || !mobile) return show({ error: 'enter client id and mobile' });
-
-  show({ status: 'requesting otp...' });
-
-  try {
-    const res = await fetch('/api/request-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, mobile })
-    });
-    const json = await res.json();
-    if(!res.ok) throw json;
-    show(json);
-    otpSection.classList.remove('hidden');
-  } catch(err) {
-    show(err);
+async function startAuth() {
+  // request a server-built auth URL and redirect browser
+  const res = await fetch(`${API_BASE}/api/hdfc/start`, { method: 'GET' });
+  const j = await res.json();
+  if (!res.ok) {
+    console.error('start auth failed', j);
+    alert('Auth start failed: ' + (j.error || JSON.stringify(j)));
+    return;
   }
-});
+  // either authUrl returned or server may redirect directly
+  window.location.href = j.authUrl;
+}
 
-btnValidateOtp.addEventListener('click', async () => {
-  const otp = otpInput.value.trim();
-  const clientId = clientIdInput.value.trim();
-  if(!otp) return show({ error: 'enter otp' });
-
-  show({ status: 'validating otp...' });
-
+// Example function to call holdings after login
+async function getHoldings() {
   try {
-    const res = await fetch('/api/validate-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, otp })
-    });
-    const json = await res.json();
-    if(!res.ok) throw json;
-    show(json);
-    // after success you can call holdings
-  } catch(err) {
-    show(err);
+    const res = await fetch(`${API_BASE}/api/hdfc/holdings`, { method: 'GET', credentials: 'include' });
+    const j = await res.json();
+    if (!res.ok) throw j;
+    console.log('holdings', j);
+    alert('Holdings fetched — check console');
+  } catch (e) {
+    console.error(e);
+    alert('Error fetching holdings: ' + (e.error || JSON.stringify(e)));
   }
-});
+}
 
-btnGetHoldings.addEventListener('click', async () => {
-  show({ status: 'fetching holdings...' });
-  try {
-    const res = await fetch('/api/holdings', { method: 'GET' });
-    const json = await res.json();
-    if(!res.ok) throw json;
-    show(json);
-  } catch(err) {
-    show(err);
-  }
-});
+// Example hooks for your page buttons
+document.getElementById('btnStartAuth')?.addEventListener('click', startAuth);
+document.getElementById('btnGetHoldings')?.addEventListener('click', getHoldings);
