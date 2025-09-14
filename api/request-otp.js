@@ -31,8 +31,16 @@ export default async function handler(req, res) {
       })
     });
 
-    const hJson = await hRes.json();
+const text = await hRes.text();
+    let hJson;
+    try {
+      hJson = JSON.parse(text);
+    } catch (e) {
+      hJson = { raw: text };
+    }
     return res.status(hRes.status).json(hJson);
+    
+    
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error', details: String(err) });
