@@ -1,72 +1,56 @@
-// Frontend snippet (use API_BASE if your frontend and API are on different hosts)
-const API_BASE = 'https://pradeepkumarv-github-io.vercel.app';
+// frontend.js
 
-// Start auth (builds token_id and returns authorize URL)
-async function startAuth() {
-  try {
-    const r = await fetch(`${API_BASE}/api/hdfc/start`, { method: 'GET', credentials: 'include' });
-    const j = await r.json();
-    if (!r.ok) {
-      console.error('start auth failed', j);
-      alert('Start auth failed: ' + (j.error || JSON.stringify(j)));
-      return;
-    }
-    if (j.authUrl) {
-      // redirect browser to HDFC login/consent page
-      window.location.href = j.authUrl;
-    } else {
-      console.log('start returned', j);
-      alert('Auth URL not returned; check server logs');
-    }
-  } catch (e) {
-    console.error(e);
-    alert('Start auth error: ' + String(e));
-  }
-}
+// Set your backend base URL (Vercel deployment)
+const API_BASE = "https://pradeepkumarv-github-io.vercel.app";
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('btnRequestOtp');
-  if (!btn) {
-    console.error('Request OTP button not found');
+// Run only after the page is ready
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("frontend.js loaded, wiring up buttons...");
+
+  // Grab elements
+  const btnRequestOtp = document.getElementById("btnRequestOtp");
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const mobileInput   = document.getElementById("mobile");
+
+  if (!btnRequestOtp) {
+    console.error("Request OTP button (#btnRequestOtp) not found in HTML.");
     return;
   }
-  btn.addEventListener('click', async () => {
-    console.log('Request OTP button clicked');
+
+  // Attach click handler
+  btnRequestOtp.addEventListener("click", async () => {
+    console.log("Request OTP clicked");
+
+    // Collect values from input fields
+    const clientId = usernameInput?.value?.trim();
+    const password = passwordInput?.value?.trim();
+    const mobile   = mobileInput?.value?.trim();
+
+    if (!clientId || !password || !mobile) {
+      alert("Please fill in Username, Password, and Mobile before requesting OTP.");
+      return;
+    }
+
     try {
-      const API = (typeof API_BASE !== 'undefined' ? API_BASE : 'https://pradeepkumarv-github-io.vercel.app');
-      const resp = await fetch(API + '/api/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId: document.getElementById('username')?.value || 'TESTCLIENT',
-          password: document.getElementById('password')?.value || 'TESTPWD',
-          mobile: document.getElementById('mobile')?.value || '9999999999'
-        })
+      const res = await fetch(API_BASE + "/api/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, password, mobile }),
+        credentials: "include"
       });
-      const text = await resp.text();
-      console.log('Request OTP response:', resp.status, text);
-      alert('OTP request done. Status ' + resp.status);
+
+      const text = await res.text();
+      console.log("Request OTP response:", res.status, text);
+
+      if (res.ok) {
+        alert("OTP request successful. Please check your mobile.");
+      } else {
+        alert("OTP request failed (" + res.status + "). See console for details.");
+      }
     } catch (err) {
-      console.error('Request OTP failed:', err);
-      alert('Error: ' + err.message);
+      console.error("Request OTP fetch error:", err);
+      alert("Error sending OTP request: " + err.message);
     }
   });
 });
-
-// After callback completes and cookie is set, call holdings:
-async function getHoldings() {
-  try {
-    const r = await fetch(`${API_BASE}/api/hdfc/holdings`, { method: 'GET', credentials: 'include' });
-    const j = await r.json();
-    if (!r.ok) {
-      console.error('holdings error', j);
-      alert('Holdings error: ' + (j.error || JSON.stringify(j)));
-      return;
-    }
-    console.log('holdings', j);
-    // render holdings in UI
-  } catch (e) {
-    console.error('holdings fetch failed', e);
-    alert('Holdings fetch failed: ' + String(e));
-  }
-}
