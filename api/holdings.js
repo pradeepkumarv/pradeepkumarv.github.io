@@ -1,33 +1,49 @@
-function setCors(req, res) {
-  const allowedOrigins = [
-    'https://pradeepkumarv.github.io',
-    'https://pradeepkumarv-github-io.vercel.app'
-  ];
-  const origin = req.headers.origin || '';
-  if (allowedOrigins.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
-  else res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-}
+// api/holdings.js
+import cookie from "cookie";
 
 export default async function handler(req, res) {
-  setCors(req, res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
+  res.setHeader("Access-Control-Allow-Origin", "https://pradeepkumarv.github.io");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method !== "GET") return res.status(405).json({ error: "method not allowed" });
 
   try {
-    const accessToken = req.cookies?.hdfc_access_token;
-    if (!accessToken) return res.status(401).json({ error: 'no access token' });
+    const cookies = cookie.parse(req.headers.cookie || "");
+    const accessToken = cookies.hdfc_access_token;
 
-    const holdingsUrl = process.env.HDFC_HOLDINGS_URL + '?api_key=' + process.env.HDFC_API_KEY;
-    const hRes = await fetch(holdingsUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+    if (!accessToken) {
+      return res.status(401).json({ error: "not authenticated" });
+    }
+
+    // 🔑 HDFC Holdings endpoint (update if docs differ)
+    const url = process.env.HDFC_HOLDINGS_URL;
+
+    const hRes = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
     });
-    const hJson = await hRes.json();
-    return res.status(hRes.status).json(hJson);
+
+    const text = await hRes.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    if (!hRes.ok) {
+      return res.status(hRes.status).json({ error: "holdings fetch failed", details: data });
+    }
+
+    return res.status(200).json(data);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'server error', details: String(err) });
+    console.error("holdings error", err);
+    return res.status(500).json({ error: "server error", details: String(err) });
   }
 }
