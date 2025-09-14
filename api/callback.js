@@ -1,11 +1,11 @@
 import { serialize } from 'cookie';
 
-function setCors(res) {
+function setCors(req, res) {
   const allowedOrigins = [
-    'https://pradeepkumarv.github.io',          // your frontend (GitHub Pages)
-    'https://pradeepkumarv-github-io.vercel.app' // your backend domain
-  ]
-   const origin = res.req?.headers?.origin || ''; // fallback if available
+    'https://pradeepkumarv.github.io',
+    'https://pradeepkumarv-github-io.vercel.app'
+  ];
+  const origin = req.headers.origin || '';
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
@@ -17,9 +17,8 @@ function setCors(res) {
 }
 
 export default async function handler(req, res) {
-  setCors(res);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
 
   try {
     const { code, request_token, token_id } = req.query;
