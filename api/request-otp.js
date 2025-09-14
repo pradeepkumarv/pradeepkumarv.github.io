@@ -1,24 +1,15 @@
-function setCors(res) {
-  const allowedOrigins = [
-    'https://pradeepkumarv.github.io',
-    'https://pradeepkumarv-github-io.vercel.app'
-  ];
-  const origin = res.req?.headers?.origin || '';
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-}
-
 export default async function handler(req, res) {
   setCors(res);
-  if (req.method === 'OPTIONS') return res.status(204).end();  // <---- important
 
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  // ✅ Handle preflight requests first
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  // ✅ Only allow POST for the actual OTP request
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'method not allowed' });
+  }
 
   try {
     const { clientId, password, mobile } = req.body;
@@ -26,25 +17,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'missing clientId or password' });
     }
 
-    const HDFC_REQUEST_OTP_URL = process.env.HDFC_REQUEST_OTP_URL;
+    // build request to HDFC OTP API...
+    // const hRes = await fetch(process.env.HDFC_REQUEST_OTP_URL, {...})
 
-    const body = {
-      api_key: process.env.HDFC_API_KEY,
-      client_id: clientId,
-      password,
-      mobile
-    };
+    // const hJson = await hRes.json();
+    // return res.status(200).json({ ok: true, hdfc: hJson });
 
-    const hRes = await fetch(HDFC_REQUEST_OTP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    const hJson = await hRes.json();
-    if (!hRes.ok) return res.status(hRes.status).json({ error: 'hdfc error', details: hJson });
-
-    return res.status(200).json({ ok: true, hdfc: hJson });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error', details: String(err) });
