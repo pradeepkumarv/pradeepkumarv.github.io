@@ -13,34 +13,21 @@ export default async function handler(req, res) {
   try {
     const cookies = cookie.parse(req.headers.cookie || "");
     const accessToken = cookies.hdfc_access_token;
+    if (!accessToken) return res.status(401).json({ error: "not authenticated" });
 
-    if (!accessToken) {
-      return res.status(401).json({ error: "not authenticated" });
-    }
-
-    // 🔑 HDFC Holdings endpoint (update if docs differ)
     const url = process.env.HDFC_HOLDINGS_URL;
+    if (!url) return res.status(500).json({ error: "HDFC_HOLDINGS_URL not configured" });
 
     const hRes = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      }
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
 
     const text = await hRes.text();
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text };
-    }
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    if (!hRes.ok) {
-      return res.status(hRes.status).json({ error: "holdings fetch failed", details: data });
-    }
-
+    if (!hRes.ok) return res.status(hRes.status).json({ error: "holdings fetch failed", details: data });
     return res.status(200).json(data);
   } catch (err) {
     console.error("holdings error", err);
