@@ -16,8 +16,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "missing parameters" });
     }
 
-    // 🔑 HDFC Validate OTP endpoint (update to exact doc URL)
     const url = process.env.HDFC_VALIDATE_OTP_URL;
+    if (!url) return res.status(500).json({ error: "HDFC_VALIDATE_OTP_URL not configured" });
 
     const hRes = await fetch(url, {
       method: "POST",
@@ -33,22 +33,13 @@ export default async function handler(req, res) {
 
     const text = await hRes.text();
     let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text };
-    }
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
-    if (!hRes.ok) {
-      return res.status(hRes.status).json({ error: "validate-otp failed", details: data });
-    }
+    if (!hRes.ok) return res.status(hRes.status).json({ error: "validate-otp failed", details: data });
 
     const accessToken = data.access_token || data.token || data.session_token;
-    if (!accessToken) {
-      return res.status(500).json({ error: "no access token", details: data });
-    }
+    if (!accessToken) return res.status(500).json({ error: "no access token", details: data });
 
-    // Store token in secure cookie
     const cookie = serialize("hdfc_access_token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -58,7 +49,7 @@ export default async function handler(req, res) {
     });
 
     res.setHeader("Set-Cookie", cookie);
-    return res.status(200).json({ ok: true, message: "OTP validated", accessTokenStored: true });
+    return res.status(200).json({ ok: true, message: "OTP validated" });
   } catch (err) {
     console.error("validate-otp error", err);
     return res.status(500).json({ error: "server error", details: String(err) });
