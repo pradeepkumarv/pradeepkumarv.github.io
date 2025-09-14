@@ -1,6 +1,6 @@
 // frontend.js
-// IMPORTANT: set your Vercel URL here (the serverless functions must be hosted there)
-const API_BASE = 'https://pradeepkumarv-github-io.vercel.app/';
+// Your backend API base on Vercel
+const API_BASE = 'https://pradeepkumarv-github-io.vercel.app';
 
 const out = document.getElementById('out');
 const usernameEl = document.getElementById('username');
@@ -19,28 +19,27 @@ function show(msg) {
   console.log(msg);
 }
 
-// Helper to safely call an endpoint and parse JSON
+// Generic API caller
 async function callApi(path, opts = {}) {
   const url = API_BASE + path;
   try {
     const res = await fetch(url, opts);
-    const text = await res.text().catch(()=>null);
+    const text = await res.text().catch(() => null);
     let json = null;
-    try { json = text ? JSON.parse(text) : null; } catch(e) { json = text; }
+    try { json = text ? JSON.parse(text) : null; } catch (e) { json = text; }
     if (!res.ok) {
       throw { status: res.status, body: json || text || 'no body' };
     }
     return json;
   } catch (err) {
-    // ensure caller receives structured error
     throw err;
   }
 }
 
-// Request OTP (POST to /api/request-otp)
+// Request OTP
 btnRequestOtp?.addEventListener('click', async () => {
   const username = usernameEl.value.trim();
-  const password = passwordEl.value; // included as requested
+  const password = passwordEl.value;
   const mobile = mobileEl.value.trim();
 
   if (!username || !password) {
@@ -50,14 +49,12 @@ btnRequestOtp?.addEventListener('click', async () => {
   show({ status: 'requesting otp...' });
   try {
     const payload = { clientId: username, password, mobile };
-    // If your backend expects a different body (e.g. username/password keys) adapt server accordingly.
-    const r = await callApi('https://pradeepkumarv-github-g4z3mkshe-pradeep-kumar-vs-projects.vercel.app/api/request-otp)', {
+    const r = await callApi('/api/request-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     show({ ok: true, response: r });
-    // show OTP input so user can validate
     otpSection.classList.remove('hidden');
   } catch (err) {
     console.error(err);
@@ -65,7 +62,7 @@ btnRequestOtp?.addEventListener('click', async () => {
   }
 });
 
-// Validate OTP (POST to /api/validate-2fa)
+// Validate OTP
 btnValidateOtp?.addEventListener('click', async () => {
   const username = usernameEl.value.trim();
   const otp = otpEl.value.trim();
@@ -85,13 +82,12 @@ btnValidateOtp?.addEventListener('click', async () => {
   }
 });
 
-// Redirect-start flow (calls server to build auth URL then redirects)
+// Redirect-start flow
 btnStartAuth?.addEventListener('click', async () => {
   show('starting redirect flow...');
   try {
     const r = await callApi('/api/hdfc/start', { method: 'GET' });
     if (!r || !r.authUrl) return show({ error: 'no authUrl returned', raw: r });
-    // Redirect to HDFC for user to authenticate/accept — HDFC will later redirect to callback
     window.location.href = r.authUrl;
   } catch (err) {
     console.error(err);
@@ -99,12 +95,14 @@ btnStartAuth?.addEventListener('click', async () => {
   }
 });
 
-// Get holdings (cookie must be set by validate or callback)
+// Get holdings
 btnGetHoldings?.addEventListener('click', async () => {
   show('fetching holdings...');
   try {
-    // credentials: 'include' sends cookies to same origin (Vercel)
-    const r = await callApi('/api/hdfc/holdings', { method: 'GET', credentials: 'include' });
+    const r = await callApi('/api/hdfc/holdings', {
+      method: 'GET',
+      credentials: 'include'
+    });
     show({ ok: true, holdings: r });
   } catch (err) {
     console.error(err);
@@ -112,5 +110,5 @@ btnGetHoldings?.addEventListener('click', async () => {
   }
 });
 
-// On load — small check to confirm script is running
+// Confirm frontend loaded
 show('frontend loaded — ready');
