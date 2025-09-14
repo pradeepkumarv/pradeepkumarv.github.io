@@ -24,6 +24,35 @@ async function startAuth() {
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnRequestOtp');
+  if (!btn) {
+    console.error('Request OTP button not found');
+    return;
+  }
+  btn.addEventListener('click', async () => {
+    console.log('Request OTP button clicked');
+    try {
+      const API = (typeof API_BASE !== 'undefined' ? API_BASE : 'https://pradeepkumarv-github-io.vercel.app');
+      const resp = await fetch(API + '/api/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: document.getElementById('username')?.value || 'TESTCLIENT',
+          password: document.getElementById('password')?.value || 'TESTPWD',
+          mobile: document.getElementById('mobile')?.value || '9999999999'
+        })
+      });
+      const text = await resp.text();
+      console.log('Request OTP response:', resp.status, text);
+      alert('OTP request done. Status ' + resp.status);
+    } catch (err) {
+      console.error('Request OTP failed:', err);
+      alert('Error: ' + err.message);
+    }
+  });
+});
+
 // After callback completes and cookie is set, call holdings:
 async function getHoldings() {
   try {
