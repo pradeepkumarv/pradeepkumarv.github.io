@@ -39,14 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
             password: password.value,
             mobile: mobile.value,
             otp: o// --- Request OTP ---
+// --- Request OTP ---
 if (btnRequestOtp) {
   btnRequestOtp.addEventListener("click", async () => {
-    console.log("Request OTP clicked");
-
-    if (!username.value || !password.value || !mobile.value) {
-      alert("⚠️ Enter Client ID, Password and Mobile first.");
-      return;
-    }
+    console.log("🟢 Request OTP button clicked");
 
     const url = API_BASE + "/api/request-otp";
     console.log("➡️ Fetching:", url);
@@ -62,40 +58,26 @@ if (btnRequestOtp) {
         })
       });
 
+      console.log("⬅️ Response object:", res);
+
       const text = await res.text();
-      console.log("⬅️ Response:", res.status, text);
+      console.log("⬅️ Response body:", text);
 
       if (res.ok) {
+        console.log("✅ OTP request successful");
         alert("✅ OTP sent! Enter it below.");
       } else {
+        console.log("❌ OTP request failed, status:", res.status);
         alert("❌ OTP request failed (" + res.status + ")");
       }
     } catch (err) {
-      console.error("❌ Request OTP error", err);
+      console.error("💥 Fetch threw an error:", err);
       alert("Error: " + err.message);
     }
   });
 }
-tp.value
-          })
-        });
 
-        const data = await res.json();
-        console.log("Validate OTP response:", res.status, data);
-
-        if (res.ok && data.access_token) {
-          HDFC_TOKEN = data.access_token;
-          alert("🎉 OTP validated! Token saved.");
-        } else {
-          alert("❌ OTP validation failed.");
-        }
-      } catch (err) {
-        console.error("Validate OTP error", err);
-        alert("Error: " + err.message);
-      }
-    });
-  }
-
+              
   // --- Get Holdings ---
   if (btnGetHoldings) {
     btnGetHoldings.addEventListener("click", async () => {
