@@ -17,31 +17,22 @@
 <body>
   <h2>HDFC InvestRight — OTP Login</h2>
 
-  <label>Username / Client ID</label>
-  <input id="username" placeholder="username / client id" />
+   <input id="username" type="text" placeholder="Client ID">
+  <input id="password" type="password" placeholder="Password">
+  <input id="mobile" type="text" placeholder="Mobile Number">
+  <button id="btnRequestOtp">Request OTP</button>
 
-  <label>Password</label>
-  <input id="password" type="password" placeholder="your account password" />
+  <hr>
 
-  <label>Mobile (if required)</label>
-  <input id="mobile" placeholder="registered mobile (optional)" />
+  <input id="otp" type="text" placeholder="Enter OTP">
+  <button id="btnValidateOtp">Validate OTP</button>
 
-  <div class="row">
-    <button id="btnRequestOtp">Request OTP</button>
-    <button id="btnStartAuth">Redirect to HDFC (start)</button>
-  </div>
+  <hr>
 
-
+  <button id="btnGetHoldings">Get Holdings</button>
+  <div id="holdings"></div>
 
   
-  <div id="otpSection" class="hidden">
-    <label>Enter OTP</label>
-   <input id="otp" type="text" placeholder="Enter OTP">
-<button id="btnValidateOtp">Validate OTP</button>
-  </div>
-
-  <h3>Actions</h3>
-  <button id="btnGetHoldings">Get Holdings</button>
 
   <h3>Status / Output</h3>
   <pre id="out">idle</pre>
