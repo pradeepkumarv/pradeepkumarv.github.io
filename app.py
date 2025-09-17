@@ -12,14 +12,17 @@ PASSWORD = os.getenv("HDFC_PASS")
 def home():
     return render_template("otp.html")
 
-@app.route("/holdings", methods=["POST"])
+@app.route("/holdings", methods=["GET", "POST"])
 def holdings():
+    if request.method == "GET":
+        return "Please submit the OTP using the form at /"
+
     otp = request.form.get("otp")
     if not otp:
         return jsonify({"error": "OTP required"}), 400
 
     try:
-        # Override USERNAME/PASSWORD in your script temporarily
+        # Inject secrets into script
         hdfc_investright.USERNAME = USERNAME
         hdfc_investright.PASSWORD = PASSWORD
 
