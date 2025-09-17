@@ -1,25 +1,27 @@
 from flask import Flask, request, jsonify, render_template
 import hdfc_investright
+import os
 
 app = Flask(__name__)
 
+# username & password pulled from Render secrets
+USERNAME = os.getenv("HDFC_USER")
+PASSWORD = os.getenv("HDFC_PASS")
+
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("login.html")
+    return render_template("otp.html")
 
 @app.route("/holdings", methods=["POST"])
 def holdings():
-    username = request.form.get("username")
-    password = request.form.get("password")
     otp = request.form.get("otp")
-
-    if not username or not password or not otp:
-        return jsonify({"error": "Username, password, and OTP required"}), 400
+    if not otp:
+        return jsonify({"error": "OTP required"}), 400
 
     try:
-        # temporarily override env values with user input
-        hdfc_investright.USERNAME = username
-        hdfc_investright.PASSWORD = password
+        # Override USERNAME/PASSWORD in your script temporarily
+        hdfc_investright.USERNAME = USERNAME
+        hdfc_investright.PASSWORD = PASSWORD
 
         token_id = hdfc_investright.get_token_id()
         hdfc_investright.login_validate(token_id)
