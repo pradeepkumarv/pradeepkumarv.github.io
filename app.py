@@ -1,14 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import hdfc_investright
 
 app = Flask(__name__)
 
-@app.route("/holdings", methods=["GET"])
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("login.html")
+
+@app.route("/holdings", methods=["POST"])
 def holdings():
-    otp = request.args.get("otp")
-    if not otp:
-        return jsonify({"error": "OTP required"}), 400
+    username = request.form.get("username")
+    password = request.form.get("password")
+    otp = request.form.get("otp")
+
+    if not username or not password or not otp:
+        return jsonify({"error": "Username, password, and OTP required"}), 400
+
     try:
+        # temporarily override env values with user input
+        hdfc_investright.USERNAME = username
+        hdfc_investright.PASSWORD = password
+
         token_id = hdfc_investright.get_token_id()
         hdfc_investright.login_validate(token_id)
         hdfc_investright.validate_2fa(token_id, otp)
