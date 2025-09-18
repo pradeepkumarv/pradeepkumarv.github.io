@@ -10,14 +10,20 @@ def get_token_id():
     url = f"{BASE}/login"
     params = {"api_key": API_KEY}
     r = requests.get(url, params=params)
+    print("Request URL:", r.url)
+    print("Status:", r.status_code, "Body:", r.text)
     r.raise_for_status()
-    return r.json().get("token_id")
-
+    token_id = r.json().get("token_id")
+    print("Token ID:", token_id)  # ✅ inside function, safe to print
+    return token_id
+    
 def login_validate(token_id, username, password):
+    print("Requesting login validate with token:", token_id)  # 👈 put it here
     url = f"{BASE}/login/validate"
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "password": password}
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("Login validate response:", r.status_code, r.text)  # optional debug
     r.raise_for_status()
     return r.json()
 
@@ -44,5 +50,4 @@ def get_holdings(access_token):
     r.raise_for_status()
     return r.json()
 
-print("Token ID:", token_id)
 print("Requesting login validate with token:", token_id)
