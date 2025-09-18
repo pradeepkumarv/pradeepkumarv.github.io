@@ -42,59 +42,81 @@ def login_validate(token_id, username, password):
     r.raise_for_status()
     return r.json()
 
-   
-def validate_2fa(token_id, username, otp):
-    url = f"{BASE}/2fa/validate"   # 👈 corrected endpoint
-    params = {"api_key": API_KEY, "token_id": token_id}
+import os
+import requests
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+BASE_URL = "https://developer.hdfcsec.com/oapi/v1"
+API_KEY = os.getenv("HDFC_API_KEY")
+API_SECRET = os.getenv("HDFC_API_SECRET")
+USERNAME = os.getenv("HDFC_USERNAME")
+
+# ---- STEP 1: Validate OTP ----
+def validate_otp(api_key, token_id, username, otp):
+    url = f"{BASE_URL}/login/otp/validate"
+    params = {"api_key": api_key, "token_id": token_id}
     payload = {"username": username, "otp": otp}
 
-    # Debug logging
     print("📲 Validating OTP")
     print("  URL:", url)
-    print("  Params:", params)
-    print("  Payload:", {"username": username, "otp": otp})
-
-    r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
-    print("  Response:", r.status_code, r.text)
-
-    r.raise_for_status()
-    return r.json()
+    resp = requests.post(url, params=params, json=payload)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
 
 
-def fetch_access_token(token_id):
-    url = f"{BASE}/access_token"
-    params = {"api_key": API_KEY, "token_id": token_id}
-    payload = {"api_secret": API_SECRET}
+# ---- STEP 2: Get Access Token ----
+def fetch_access_token(api_key, token_id, api_secret):
+    url = f"{BASE_URL}/access_token"
+    params = {"api_key": api_key, "token_id": token_id}
+    payload = {"api_secret": api_secret}
 
-    # Debug logging
     print("🔑 Fetching access token")
-    print("  URL:", url)
-    print("  Params:", params)
-    print("  Payload:", {"api_secret": "***"})  # mask secret
-
-    r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
-    print("  Response:", r.status_code, r.text)
-
-    r.raise_for_status()
-    access_token = r.json().get("access_token")
-    print("  Access token received:", access_token[:8] + "..." if access_token else None)
-
-    return access_token
+    resp = requests.post(url, params=params, json=payload)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()["access_token"]
 
 
+# ---- STEP 3: Fetch Holdings ----
 def get_holdings(access_token):
-    url = f"{BASE}/portfolio/holdings"
+    url = f"{BASE_URL}/portfolio/holdings"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    # Debug logging
     print("📊 Fetching holdings")
-    print("  URL:", url)
-    print("  Headers:", {"Authorization": f"Bearer {access_token[:8]}..."})
+    resp = requests.get(url, headers=headers)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
 
-    r = requests.get(url, headers=headers)
-    print("  Response:", r.status_code, r.text)
 
-    r.raise_for_status()
-    return r.json()
+# ---- FLASK ROUTE ----
+@app.route("/holdings", methods=["POST"])
+def holdings_route():
+    try:
+        data = request.json
+        otp = data.get("otp")
+        token_id = data.get("token_id")
+
+        if not otp or not token_id:
+            return jsonify({"error": "OTP and token_id are required"}), 400
+
+        # Step 1: Validate OTP
+        validate_otp(API_KEY, token_id, USERNAME, otp)
+
+        # Step 2: Fetch access token
+        access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
+
+        # Step 3: Fetch holdings
+        holdings = get_holdings(access_token)
+
+        return jsonify(holdings)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+   
 
 
