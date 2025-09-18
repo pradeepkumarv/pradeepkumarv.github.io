@@ -43,3 +43,6 @@ def get_holdings(access_token):
     r = requests.get(url, headers=headers)
     r.raise_for_status()
     return r.json()
+
+print("Token ID:", token_id)
+print("Requesting login validate with token:", token_id)
