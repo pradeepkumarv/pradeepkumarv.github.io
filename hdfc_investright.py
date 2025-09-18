@@ -19,9 +19,18 @@ PASSWORD = os.getenv("HDFC_PASS")
 HEADERS_JSON = {"Content-Type": "application/json"}
 
 def get_token_id():
-    r = requests.get(f"{BASE}/token_id", params={"api_key": API_KEY})
-    r.raise_for_status()
-    return r.json().get("token_id")
+    url = f"{BASE}/token_id"
+    params = {"api_key": API_KEY}
+    response = requests.get(url, params=params)
+    print("Request URL: ", response.url)
+    print("Status Code: ", response.status_code)
+    print("Response Body: ", response.text)
+    response.raise_for_status()
+    return response.json().get("token_id")
+
+if __name__ == "__main__":
+    token = get_token_id()
+    print("Token ID:", token)
 
 def login_validate():
     url = f"{BASE}/login/validate"
