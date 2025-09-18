@@ -23,29 +23,30 @@ def get_token_id():
     r.raise_for_status()
     return r.json().get("token_id")
 
-def login_validate(token_id):
+def login_validate():
     url = f"{BASE}/login/validate"
-    params = {"api_key": API_KEY, "token_id": token_id}
+    params = {"api_key": API_KEY}
     payload = {"username": USERNAME, "password": PASSWORD}
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
     r.raise_for_status()
-    return r.json()
+    return r.json()   # should indicate OTP sent
 
-def validate_2fa(token_id, otp):
+def validate_2fa(otp):
     url = f"{BASE}/login/2fa/validate"
-    params = {"api_key": API_KEY, "token_id": token_id}
+    params = {"api_key": API_KEY}
     payload = {"username": USERNAME, "otp": otp}
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
     r.raise_for_status()
     return r.json()
 
-def fetch_access_token(token_id):
+def fetch_access_token():
     url = f"{BASE}/access_token"
-    params = {"api_key": API_KEY, "token_id": token_id}
-    payload = {"api_secret": API_SECRET}  # adapt if docs require different payload
+    params = {"api_key": API_KEY}
+    payload = {"api_secret": API_SECRET}
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
     r.raise_for_status()
     return r.json().get("access_token")
+
 
 def get_holdings(access_token):
     # example holdings endpoint; check docs for exact path & params
