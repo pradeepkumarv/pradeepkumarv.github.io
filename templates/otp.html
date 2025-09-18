@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>HDFC Securities OTP Login</title>
+  <title>Enter OTP</title>
 </head>
 <body>
-  <h2>🔑 Enter OTP</h2>
+  <h2>📲 Enter OTP</h2>
   <form action="/holdings" method="post">
+    <input type="hidden" name="username" value="{{ username }}">
+    <input type="hidden" name="password" value="{{ password }}">
     <label>OTP:</label><br>
     <input type="text" name="otp"><br><br>
     <button type="submit">Get Holdings</button>
