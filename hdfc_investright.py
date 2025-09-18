@@ -68,11 +68,21 @@ def authorise(api_key, token_id, request_token, consent="consent"):
     url = f"{BASE}/authorise"
     params = {
         "api_key": api_key,
-        "token_id": token_id,
+        "token_id": token_id
+    }
+    payload = {
         "consent": consent,
-        "request_token": request_token,   # must be snake_case
+        "requestToken": request_token  # 👈 CamelCase
     }
 
+    print("🔑 Authorising session")
+    print("  URL:", url)
+    resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
+
+    
     print("🔑 Authorising session")
     print("  URL:", url)
     resp = requests.post(url, params=params, headers=HEADERS_JSON)
