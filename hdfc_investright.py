@@ -43,14 +43,23 @@ def login_validate(token_id, username, password):
     return r.json()
 
    
-
 def validate_2fa(token_id, username, otp):
-    url = f"{BASE}/login/2fa/validate"
+    url = f"{BASE}/twoFA/validate"   # 👈 corrected endpoint
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "otp": otp}
+
+    # Debug logging
+    print("📲 Validating OTP")
+    print("  URL:", url)
+    print("  Params:", params)
+    print("  Payload:", {"username": username, "otp": otp})
+
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", r.status_code, r.text)
+
     r.raise_for_status()
     return r.json()
+
 
 def fetch_access_token(token_id):
     url = f"{BASE}/access_token"
