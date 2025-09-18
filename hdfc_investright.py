@@ -24,7 +24,7 @@ def get_token_id():
 
     return token_id
 
- def login_validate(token_id, username, password):
+def login_validate(token_id, username, password):
     url = f"{BASE}/login/validate"
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "password": password}
@@ -41,8 +41,8 @@ def get_token_id():
 
     r.raise_for_status()
     return r.json()
-   
 
+   
 
 def validate_2fa(token_id, username, otp):
     url = f"{BASE}/login/2fa/validate"
