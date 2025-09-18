@@ -8,6 +8,7 @@
   <form action="/holdings" method="post">
     <input type="hidden" name="username" value="{{ username }}">
     <input type="hidden" name="password" value="{{ password }}">
+    <input type="hidden" name="token_id" value="{{ token_id }}">
     <label>OTP:</label><br>
     <input type="text" name="otp"><br><br>
     <button type="submit">Get Holdings</button>
