@@ -11,19 +11,10 @@ def home():
 def request_otp():
     username = request.form.get("username")
     password = request.form.get("password")
-
-    if not username or not password:
-        return jsonify({"error": "Username and password required"}), 400
-
     try:
-        # save username/password into module vars
-        hdfc_investright.USERNAME = username
-        hdfc_investright.PASSWORD = password
-
         token_id = hdfc_investright.get_token_id()
-        hdfc_investright.login_validate(token_id)  # triggers OTP
-        # pass token_id forward
-        return render_template("otp.html", username=username, password=password)
+        hdfc_investright.login_validate(token_id, username, password)
+        return render_template("otp.html", username=username, password=password, token_id=token_id)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -32,17 +23,9 @@ def holdings():
     username = request.form.get("username")
     password = request.form.get("password")
     otp = request.form.get("otp")
-
-    if not otp:
-        return jsonify({"error": "OTP required"}), 400
-
+    token_id = request.form.get("token_id")
     try:
-        hdfc_investright.USERNAME = username
-        hdfc_investright.PASSWORD = password
-
-        token_id = hdfc_investright.get_token_id()
-        hdfc_investright.login_validate(token_id)
-        hdfc_investright.validate_2fa(token_id, otp)
+        hdfc_investright.validate_2fa(token_id, username, otp)
         access_token = hdfc_investright.fetch_access_token(token_id)
         data = hdfc_investright.get_holdings(access_token)
         return jsonify(data)
