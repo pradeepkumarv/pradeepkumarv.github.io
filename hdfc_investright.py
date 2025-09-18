@@ -42,16 +42,6 @@ def login_validate(token_id, username, password):
     r.raise_for_status()
     return r.json()
 
-import os
-import requests
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-BASE_URL = "https://developer.hdfcsec.com/oapi/v1"
-API_KEY = os.getenv("HDFC_API_KEY")
-API_SECRET = os.getenv("HDFC_API_SECRET")
-USERNAME = os.getenv("HDFC_USERNAME")
 
 # ---- STEP 1: Validate OTP ----
 def validate_otp(api_key, token_id, username, otp):
