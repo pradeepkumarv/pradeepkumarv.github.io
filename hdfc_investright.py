@@ -1,13 +1,9 @@
 import os
 import requests
-from flask import Flask, request, jsonify
 
 # -----------------------------
 # Config
 # -----------------------------
-app = Flask(__name__)
-app.secret_key = "super_secret_key"
-
 BASE = "https://developer.hdfcsec.com/oapi/v1"
 API_KEY = os.getenv("HDFC_API_KEY")
 API_SECRET = os.getenv("HDFC_API_SECRET")
@@ -67,13 +63,14 @@ def validate_otp(api_key, token_id, otp):
     resp.raise_for_status()
     return resp.json()
 
+
 def authorise(api_key, token_id, request_token, consent="consent"):
     url = f"{BASE}/authorise"
     params = {
         "api_key": api_key,
         "token_id": token_id,
         "consent": consent,
-        "request_token": request_token,   # must be request_token
+        "request_token": request_token,   # must be snake_case
     }
 
     print("🔑 Authorising session")
@@ -83,10 +80,14 @@ def authorise(api_key, token_id, request_token, consent="consent"):
     resp.raise_for_status()
     return resp.json()
 
-def fetch_access_token(api_key, token_id, api_secret):
+
+def fetch_access_token(api_key, token_id, api_secret, request_token=None):
     url = f"{BASE}/access_token"
     params = {"api_key": api_key, "token_id": token_id}
     payload = {"api_secret": api_secret}
+
+    if request_token:
+        payload["request_token"] = request_token
 
     print("🔑 Fetching access token")
     resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
@@ -98,7 +99,7 @@ def fetch_access_token(api_key, token_id, api_secret):
 def get_holdings(access_token):
     url = f"{BASE}/portfolio/holdings"
     headers = {
-        "Authorization": access_token,
+        "Authorization": f"Bearer {access_token}",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
 
@@ -107,52 +108,3 @@ def get_holdings(access_token):
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     return resp.json()
-
-
-# -----------------------------
-# Flask Routes
-# -----------------------------
-@app.route("/request-otp", methods=["POST"])
-def request_otp():
-    try:
-        token_id = get_token_id()
-        login_response = login_validate(token_id, USERNAME, PASSWORD)
-        return jsonify({"token_id": token_id, "login": login_response})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/holdings", methods=["POST"])
-def holdings_route():
-    try:
-        data = request.json
-        otp = data.get("otp")
-        token_id = data.get("token_id")
-
-        if not otp or not token_id:
-            return jsonify({"error": "OTP and token_id are required"}), 400
-
-        print("📲 Step 1: Validating OTP...")
-        otp_result = validate_otp(API_KEY, token_id, USERNAME, otp)
-        print("✅ OTP validation result:", otp_result)
-
-        print("🔑 Step 2: Fetching access token...")
-        access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
-        print("✅ Access token:", access_token)
-
-        print("📊 Step 3: Fetching holdings...")
-        holdings = get_holdings(access_token)
-
-        return jsonify(holdings)
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-
-# -----------------------------
-# Entrypoint
-# -----------------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
