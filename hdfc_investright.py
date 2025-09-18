@@ -82,17 +82,4 @@ def fetch_access_token(token_id):
     return access_token
 
 
-def get_holdings(access_token):
-    url = f"{BASE}/portfolio/holdings"
-    headers = {"Authorization": f"Bearer {access_token}"}
 
-    # Debug logging
-    print("📊 Fetching holdings")
-    print("  URL:", url)
-    print("  Headers:", {"Authorization": f"Bearer {access_token[:8]}..."})
-
-    r = requests.get(url, headers=headers)
-    print("  Response:", r.status_code, r.text)
-
-    r.raise_for_status()
-    return r.json()
