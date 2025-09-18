@@ -42,7 +42,6 @@ def login_validate(token_id, username, password):
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "password": password}
 
-    # Debug logging
     safe_password = "*" * len(password) if password else None
     print("🔐 Calling login_validate")
     print("  URL:", url)
@@ -95,6 +94,17 @@ def get_holdings(access_token):
 # -----------------------------
 # Flask Routes
 # -----------------------------
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "message": "✅ HDFC Securities API Integration is running",
+        "endpoints": {
+            "POST /request-otp": "Start login and trigger OTP",
+            "POST /holdings": "Validate OTP and fetch holdings"
+        }
+    })
+
+
 @app.route("/request-otp", methods=["POST"])
 def request_otp():
     try:
@@ -115,18 +125,22 @@ def holdings_route():
         if not otp or not token_id:
             return jsonify({"error": "OTP and token_id are required"}), 400
 
-        # Step 1: Validate OTP
-        validate_otp(API_KEY, token_id, USERNAME, otp)
+        print("📲 Step 1: Validating OTP...")
+        otp_result = validate_otp(API_KEY, token_id, USERNAME, otp)
+        print("✅ OTP validation result:", otp_result)
 
-        # Step 2: Fetch access token
+        print("🔑 Step 2: Fetching access token...")
         access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
+        print("✅ Access token:", access_token)
 
-        # Step 3: Fetch holdings
+        print("📊 Step 3: Fetching holdings...")
         holdings = get_holdings(access_token)
 
         return jsonify(holdings)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
