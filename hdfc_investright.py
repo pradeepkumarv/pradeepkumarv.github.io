@@ -44,7 +44,7 @@ def login_validate(token_id, username, password):
 
    
 def validate_2fa(token_id, username, otp):
-    url = f"{BASE}/twoFA/validate"   # 👈 corrected endpoint
+    url = f"{BASE}/2fa/validate"   # 👈 corrected endpoint
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "otp": otp}
 
