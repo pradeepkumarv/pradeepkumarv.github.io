@@ -8,9 +8,11 @@ app.secret_key = "super-secret-key"  # replace with env var in Render
 API_KEY = os.getenv("HDFC_API_KEY")
 API_SECRET = os.getenv("HDFC_API_SECRET")
 
+
 @app.route("/", methods=["GET"])
 def home():
     return render_template("login.html")
+
 
 @app.route("/request-otp", methods=["POST"])
 def request_otp():
@@ -34,6 +36,7 @@ def request_otp():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/holdings", methods=["POST"])
 def holdings():
     otp = request.form.get("otp")
@@ -46,8 +49,8 @@ def holdings():
         return jsonify({"error": "Session expired. Please login again."}), 401
 
     try:
-        # Step 4: validate OTP via /twofa/validate
-        otp_result = hdfc_investright.validate_otp(hdfc_investright.API_KEY, token_id, otp)
+        # Step 4: validate OTP
+        otp_result = hdfc_investright.validate_otp(API_KEY, token_id, otp)
         print("✅ OTP validation result:", otp_result)
 
         request_token = otp_result.get("requestToken")
@@ -55,11 +58,11 @@ def holdings():
             return jsonify({"error": "No requestToken in OTP response"}), 400
 
         # Step 5: authorise
-        auth_result = hdfc_investright.authorise(hdfc_investright.API_KEY, token_id, request_token)
+        auth_result = hdfc_investright.authorise(API_KEY, token_id, request_token)
         print("✅ Authorise result:", auth_result)
 
         # Step 6: fetch access token (using request_token + api_secret)
-        access_token = hdfc_investright.fetch_access_token(hdfc_investright.API_KEY, token_id, hdfc_investright.API_SECRET)
+        access_token = hdfc_investright.fetch_access_token(API_KEY, token_id, API_SECRET, request_token)
         print("✅ Access token:", access_token)
 
         # Step 7: get holdings
