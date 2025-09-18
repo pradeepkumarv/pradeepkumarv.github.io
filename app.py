@@ -1,56 +1,137 @@
-from flask import Flask, request, render_template, jsonify, session
-import hdfc_investright
+import os
+import requests
+from flask import Flask, request, jsonify
 
+# -----------------------------
+# Config
+# -----------------------------
 app = Flask(__name__)
-app.secret_key = "super-secret-key"  # replace with env var in Render
+app.secret_key = "super_secret_key"
 
-@app.route("/", methods=["GET"])
-def home():
-    return render_template("login.html")
+BASE = "https://developer.hdfcsec.com/oapi/v1"
+API_KEY = os.getenv("HDFC_API_KEY")
+API_SECRET = os.getenv("HDFC_API_SECRET")
+USERNAME = os.getenv("HDFC_USERNAME")
+PASSWORD = os.getenv("HDFC_PASSWORD")
+HEADERS_JSON = {"Content-Type": "application/json"}
 
+
+# -----------------------------
+# Helper Functions
+# -----------------------------
+def get_token_id():
+    url = f"{BASE}/login"
+    params = {"api_key": API_KEY}
+    r = requests.get(url, params=params)
+    print("Request URL:", r.url)
+    print("Status:", r.status_code, "Body:", r.text)
+    r.raise_for_status()
+
+    data = r.json()
+    token_id = data.get("tokenId") or data.get("token_id")
+    print("Parsed token_id:", token_id)
+
+    if not token_id:
+        raise ValueError(f"Could not extract token_id from response: {data}")
+
+    return token_id
+
+
+def login_validate(token_id, username, password):
+    url = f"{BASE}/login/validate"
+    params = {"api_key": API_KEY, "token_id": token_id}
+    payload = {"username": username, "password": password}
+
+    safe_password = "*" * len(password) if password else None
+    print("🔐 Calling login_validate")
+    print("  URL:", url)
+    print("  Params:", params)
+    print("  Payload:", {"username": username, "password": safe_password})
+
+    r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", r.status_code, r.text)
+
+    r.raise_for_status()
+    return r.json()
+
+
+def validate_otp(api_key, token_id, username, otp):
+    url = f"{BASE}/login/otp/validate"
+    params = {"api_key": api_key, "token_id": token_id}
+    payload = {"username": username, "otp": otp}
+
+    print("📲 Validating OTP")
+    print("  URL:", url)
+    resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def fetch_access_token(api_key, token_id, api_secret):
+    url = f"{BASE}/access_token"
+    params = {"api_key": api_key, "token_id": token_id}
+    payload = {"api_secret": api_secret}
+
+    print("🔑 Fetching access token")
+    resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
+def get_holdings(access_token):
+    url = f"{BASE}/portfolio/holdings"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    print("📊 Fetching holdings")
+    resp = requests.get(url, headers=headers)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
+
+
+# -----------------------------
+# Flask Routes
+# -----------------------------
 @app.route("/request-otp", methods=["POST"])
 def request_otp():
-    username = request.form.get("username")
-    password = request.form.get("password")
-
     try:
-        # Step 1: get token_id
-        token_id = hdfc_investright.get_token_id()
-        session["token_id"] = token_id
-        session["username"] = username
-        session["password"] = password
-
-        # Step 2: call login/validate (this triggers OTP)
-        result = hdfc_investright.login_validate(token_id, username, password)
-        print("Login validate response:", result)
-
-        # Step 3: show OTP form
-        return render_template("otp.html")
-
+        token_id = get_token_id()
+        login_response = login_validate(token_id, USERNAME, PASSWORD)
+        return jsonify({"token_id": token_id, "login": login_response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/holdings", methods=["POST"])
-def holdings():
-    otp = request.form.get("otp")
-
-    token_id = session.get("token_id")
-    username = session.get("username")
-    password = session.get("password")
-
-    if not (token_id and username and password):
-        return jsonify({"error": "Session expired. Please login again."}), 401
-
+def holdings_route():
     try:
-        # Step 4: validate OTP
-        hdfc_investright.validate_otp(token_id, username, otp)
+        data = request.json
+        otp = data.get("otp")
+        token_id = data.get("token_id")
 
-        # Step 5: fetch access token
-        access_token = hdfc_investright.fetch_access_token(token_id)
+        if not otp or not token_id:
+            return jsonify({"error": "OTP and token_id are required"}), 400
 
-        # Step 6: get holdings
-        data = hdfc_investright.get_holdings(access_token)
-        return jsonify(data)
+        # Step 1: Validate OTP
+        otp_result = validate_otp(API_KEY, token_id, USERNAME, otp)
+        print("✅ OTP validation result:", otp_result)
+
+        # Step 2: Fetch access token
+        access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
+
+        # Step 3: Fetch holdings
+        holdings = get_holdings(access_token)
+
+        return jsonify(holdings)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# -----------------------------
+# Entrypoint
+# -----------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
