@@ -55,14 +55,29 @@ def login_validate(token_id, username, password):
     return r.json()
 
 
-def validate_otp(api_key, token_id, username, otp):
-    url = f"{BASE}/login/otp/validate"
+def validate_otp(api_key, token_id, otp):
+    url = f"{BASE}/twofa/validate"
     params = {"api_key": api_key, "token_id": token_id}
-    payload = {"username": username, "otp": otp}
+    payload = {"answer": otp}  # ✅ docs show "answer", not "otp"
 
-    print("📲 Validating OTP")
+    print("📲 Validating OTP (twofa)")
     print("  URL:", url)
     resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
+
+def authorise(api_key, token_id, request_token, consent="consent"):
+    url = f"{BASE}/authorise"
+    params = {
+        "api_key": api_key,
+        "token_id": token_id,
+        "consent": consent,
+        "request_token": request_token,
+    }
+
+    print("🔑 Authorising session")
+    resp = requests.post(url, params=params, headers=HEADERS_JSON)
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     return resp.json()
