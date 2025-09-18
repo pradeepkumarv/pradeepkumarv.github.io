@@ -65,14 +65,36 @@ def fetch_access_token(token_id):
     url = f"{BASE}/access_token"
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"api_secret": API_SECRET}
+
+    # Debug logging
+    print("🔑 Fetching access token")
+    print("  URL:", url)
+    print("  Params:", params)
+    print("  Payload:", {"api_secret": "***"})  # mask secret
+
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
+    print("  Response:", r.status_code, r.text)
+
     r.raise_for_status()
-    return r.json().get("access_token")
+    access_token = r.json().get("access_token")
+    print("  Access token received:", access_token[:8] + "..." if access_token else None)
+
+    return access_token
+
 
 def get_holdings(access_token):
     url = f"{BASE}/portfolio/holdings"
     headers = {"Authorization": f"Bearer {access_token}"}
+
+    # Debug logging
+    print("📊 Fetching holdings")
+    print("  URL:", url)
+    print("  Headers:", {"Authorization": f"Bearer {access_token[:8]}..."})
+
     r = requests.get(url, headers=headers)
+    print("  Response:", r.status_code, r.text)
+
     r.raise_for_status()
     return r.json()
+
 
