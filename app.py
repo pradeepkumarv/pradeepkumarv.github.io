@@ -1,30 +1,44 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, render_template, jsonify
 import hdfc_investright
-import os
 
 app = Flask(__name__)
 
-# username & password pulled from Render secrets
-USERNAME = os.getenv("HDFC_USER")
-PASSWORD = os.getenv("HDFC_PASS")
-
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("otp.html")
+    return render_template("login.html")
 
-@app.route("/holdings", methods=["GET", "POST"])
+@app.route("/request-otp", methods=["POST"])
+def request_otp():
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+
+    try:
+        # save username/password into module vars
+        hdfc_investright.USERNAME = username
+        hdfc_investright.PASSWORD = password
+
+        token_id = hdfc_investright.get_token_id()
+        hdfc_investright.login_validate(token_id)  # triggers OTP
+        # pass token_id forward
+        return render_template("otp.html", username=username, password=password)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/holdings", methods=["POST"])
 def holdings():
-    if request.method == "GET":
-        return "Please submit the OTP using the form at /"
-
+    username = request.form.get("username")
+    password = request.form.get("password")
     otp = request.form.get("otp")
+
     if not otp:
         return jsonify({"error": "OTP required"}), 400
 
     try:
-        # Inject secrets into script
-        hdfc_investright.USERNAME = USERNAME
-        hdfc_investright.PASSWORD = PASSWORD
+        hdfc_investright.USERNAME = username
+        hdfc_investright.PASSWORD = password
 
         token_id = hdfc_investright.get_token_id()
         hdfc_investright.login_validate(token_id)
