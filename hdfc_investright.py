@@ -19,7 +19,7 @@ def login_validate(token_id, username, password):
     payload = {"username": username, "password": password}
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
     r.raise_for_status()
-    return r.json()  # should indicate OTP sent
+    return r.json()
 
 def validate_2fa(token_id, username, otp):
     url = f"{BASE}/login/2fa/validate"
