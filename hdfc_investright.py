@@ -9,7 +9,7 @@ import os
 import requests
 import time
 
-BASE = "https://developer.hdfcsec.com/oapi/v1"
+BASE = "https://developer.hdfcsec.com/api/v1"
 
 API_KEY = os.getenv("HDFC_API_KEY")        # set in env
 API_SECRET = os.getenv("HDFC_API_SECRET")  # set in env (if required)
