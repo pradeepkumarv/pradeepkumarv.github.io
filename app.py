@@ -56,7 +56,8 @@ def login_validate(token_id, username, password):
 
 
 def validate_otp(api_key, token_id, username, otp):
-    url = f"{BASE}/login/otp/validate"
+    # ✅ Corrected endpoint
+    url = f"{BASE}/2fa/validate"
     params = {"api_key": api_key, "token_id": token_id}
     payload = {"username": username, "otp": otp}
 
@@ -88,54 +89,4 @@ def get_holdings(access_token):
     resp = requests.get(url, headers=headers)
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
-    return resp.json()
-
-
-# -----------------------------
-# Flask Routes
-# -----------------------------
-@app.route("/request-otp", methods=["POST"])
-def request_otp():
-    try:
-        token_id = get_token_id()
-        login_response = login_validate(token_id, USERNAME, PASSWORD)
-        return jsonify({"token_id": token_id, "login": login_response})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/holdings", methods=["POST"])
-@app.route("/holdings", methods=["POST"])
-def holdings_route():
-    try:
-        data = request.json
-        otp = data.get("otp")
-        token_id = data.get("token_id")
-
-        if not otp or not token_id:
-            return jsonify({"error": "OTP and token_id are required"}), 400
-
-        print("📲 Step 1: Validating OTP...")
-        otp_result = validate_otp(API_KEY, token_id, USERNAME, otp)
-        print("✅ OTP validation result:", otp_result)
-
-        print("🔑 Step 2: Fetching access token...")
-        access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
-        print("✅ Access token:", access_token)
-
-        print("📊 Step 3: Fetching holdings...")
-        holdings = get_holdings(access_token)
-
-        return jsonify(holdings)
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-
-# -----------------------------
-# Entrypoint
-# -----------------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    return
