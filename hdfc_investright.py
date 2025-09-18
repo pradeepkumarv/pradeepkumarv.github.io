@@ -73,15 +73,15 @@ def authorise(api_key, token_id, request_token, consent="consent"):
         "api_key": api_key,
         "token_id": token_id,
         "consent": consent,
-        "request_token": request_token,
+        "request_token": request_token,   # must be request_token
     }
 
     print("🔑 Authorising session")
+    print("  URL:", url)
     resp = requests.post(url, params=params, headers=HEADERS_JSON)
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     return resp.json()
-
 
 def fetch_access_token(api_key, token_id, api_secret):
     url = f"{BASE}/access_token"
