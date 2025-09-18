@@ -24,16 +24,25 @@ def get_token_id():
 
     return token_id
 
-    
-def login_validate(token_id, username, password):
-    print("Requesting login validate with token:", token_id)  # 👈 put it here
+ def login_validate(token_id, username, password):
     url = f"{BASE}/login/validate"
     params = {"api_key": API_KEY, "token_id": token_id}
     payload = {"username": username, "password": password}
+
+    # Debug logging
+    safe_password = "*" * len(password) if password else None
+    print("🔐 Calling login_validate")
+    print("  URL:", url)
+    print("  Params:", params)
+    print("  Payload:", {"username": username, "password": safe_password})
+
     r = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
-    print("Login validate response:", r.status_code, r.text)  # optional debug
+    print("  Response:", r.status_code, r.text)
+
     r.raise_for_status()
     return r.json()
+   
+
 
 def validate_2fa(token_id, username, otp):
     url = f"{BASE}/login/2fa/validate"
