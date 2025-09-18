@@ -13,7 +13,7 @@ def get_token_id():
     print("Request URL:", r.url)
     print("Status:", r.status_code, "Body:", r.text)
     r.raise_for_status()
-    token_id = r.json().get("token_id")
+    token_id = r.json().get("tokenid")
     print("Token ID:", token_id)  # ✅ inside function, safe to print
     return token_id
     
