@@ -105,6 +105,7 @@ def request_otp():
 
 
 @app.route("/holdings", methods=["POST"])
+@app.route("/holdings", methods=["POST"])
 def holdings_route():
     try:
         data = request.json
@@ -114,19 +115,22 @@ def holdings_route():
         if not otp or not token_id:
             return jsonify({"error": "OTP and token_id are required"}), 400
 
-        # Step 1: Validate OTP
+        print("📲 Step 1: Validating OTP...")
         otp_result = validate_otp(API_KEY, token_id, USERNAME, otp)
         print("✅ OTP validation result:", otp_result)
 
-        # Step 2: Fetch access token
+        print("🔑 Step 2: Fetching access token...")
         access_token = fetch_access_token(API_KEY, token_id, API_SECRET)
+        print("✅ Access token:", access_token)
 
-        # Step 3: Fetch holdings
+        print("📊 Step 3: Fetching holdings...")
         holdings = get_holdings(access_token)
 
         return jsonify(holdings)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
