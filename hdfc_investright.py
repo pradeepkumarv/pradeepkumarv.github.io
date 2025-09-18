@@ -50,4 +50,3 @@ def get_holdings(access_token):
     r.raise_for_status()
     return r.json()
 
-print("Requesting login validate with token:", token_id)
