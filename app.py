@@ -1,9 +1,12 @@
-
 from flask import Flask, request, render_template, jsonify, session
 import hdfc_investright
+import os
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"  # replace with env var in Render
+
+API_KEY = os.getenv("HDFC_API_KEY")
+API_SECRET = os.getenv("HDFC_API_SECRET")
 
 @app.route("/", methods=["GET"])
 def home():
@@ -43,11 +46,11 @@ def holdings():
         return jsonify({"error": "Session expired. Please login again."}), 401
 
     try:
-        # Step 4: validate OTP
-        hdfc_investright.validate_otp(token_id, username, otp)
+        # Step 4: validate OTP (fix: include API_KEY)
+        hdfc_investright.validate_otp(API_KEY, token_id, username, otp)
 
-        # Step 5: fetch access token
-        access_token = hdfc_investright.fetch_access_token(token_id)
+        # Step 5: fetch access token (fix: include API_KEY & API_SECRET)
+        access_token = hdfc_investright.fetch_access_token(API_KEY, token_id, API_SECRET)
 
         # Step 6: get holdings
         data = hdfc_investright.get_holdings(access_token)
