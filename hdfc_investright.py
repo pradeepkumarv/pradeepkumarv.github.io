@@ -13,9 +13,17 @@ def get_token_id():
     print("Request URL:", r.url)
     print("Status:", r.status_code, "Body:", r.text)
     r.raise_for_status()
-    token_id = r.json().get("tokenid")
-    print("Token ID:", token_id)  # ✅ inside function, safe to print
+
+    # Try both possible keys: tokenId (correct) or token_id (just in case)
+    data = r.json()
+    token_id = data.get("tokenId") or data.get("token_id")
+    print("Parsed token_id:", token_id)
+
+    if not token_id:
+        raise ValueError(f"Could not extract token_id from response: {data}")
+
     return token_id
+
     
 def login_validate(token_id, username, password):
     print("Requesting login validate with token:", token_id)  # 👈 put it here
