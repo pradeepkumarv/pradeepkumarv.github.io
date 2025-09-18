@@ -43,7 +43,7 @@ def holdings():
 
     try:
         # Step 4: validate OTP
-        hdfc_investright.validate_2fa(token_id, username, otp)
+        hdfc_investright.validate_otp(token_id, username, otp)
 
         # Step 5: fetch access token
         access_token = hdfc_investright.fetch_access_token(token_id)
