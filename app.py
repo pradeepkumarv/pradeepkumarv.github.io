@@ -46,15 +46,27 @@ def holdings():
         return jsonify({"error": "Session expired. Please login again."}), 401
 
     try:
-        # Step 4: validate OTP (fix: include API_KEY)
-        hdfc_investright.validate_otp(API_KEY, token_id, username, otp)
+        # Step 4: validate OTP via /twofa/validate
+        otp_result = hdfc_investright.validate_otp(hdfc_investright.API_KEY, token_id, otp)
+        print("✅ OTP validation result:", otp_result)
 
-        # Step 5: fetch access token (fix: include API_KEY & API_SECRET)
-        access_token = hdfc_investright.fetch_access_token(API_KEY, token_id, API_SECRET)
+        request_token = otp_result.get("requestToken")
+        if not request_token:
+            return jsonify({"error": "No requestToken in OTP response"}), 400
 
-        # Step 6: get holdings
+        # Step 5: authorise
+        auth_result = hdfc_investright.authorise(hdfc_investright.API_KEY, token_id, request_token)
+        print("✅ Authorise result:", auth_result)
+
+        # Step 6: fetch access token (using request_token + api_secret)
+        access_token = hdfc_investright.fetch_access_token(hdfc_investright.API_KEY, token_id, hdfc_investright.API_SECRET)
+        print("✅ Access token:", access_token)
+
+        # Step 7: get holdings
         data = hdfc_investright.get_holdings(access_token)
         return jsonify(data)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
