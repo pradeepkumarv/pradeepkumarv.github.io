@@ -121,17 +121,7 @@ def get_holdings(access_token):
     resp.raise_for_status()
     return resp.json()
 
-def resend_2fa(token_id):
-    url = f"{BASE}/twofa/resend"
-    params = {"api_key": API_KEY, "token_id": token_id}
-    print("🔁 Resending 2FA OTP")
-    print("  URL:", url)
-    print("  Params:", params)
-    resp = requests.post(url, params=params, headers=HEADERS_JSON)
-    print("  Response:", resp.status_code, resp.text)
-    resp.raise_for_status()
-    return resp.json()
-    def get_holdings_with_fallback(request_token, token_id):
+def get_holdings_with_fallback(request_token, token_id):
     """
     Try different ways to authenticate with holdings API
     """
@@ -185,3 +175,13 @@ def resend_2fa(token_id):
     # If all methods fail, raise the last error
     raise Exception(f"All {len(auth_methods)} authentication methods failed for holdings")
 
+def resend_2fa(token_id):
+    url = f"{BASE}/twofa/resend"
+    params = {"api_key": API_KEY, "token_id": token_id}
+    print("🔁 Resending 2FA OTP")
+    print("  URL:", url)
+    print("  Params:", params)
+    resp = requests.post(url, params=params, headers=HEADERS_JSON)
+    print("  Response:", resp.status_code, resp.text)
+    resp.raise_for_status()
+    return resp.json()
