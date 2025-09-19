@@ -11,7 +11,7 @@ USERNAME = os.getenv("HDFC_USERNAME")
 PASSWORD = os.getenv("HDFC_PASSWORD")
 HEADERS_JSON = {
     "Content-Type": "application/json",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 }
 
 # -----------------------------
@@ -75,19 +75,7 @@ def authorise(token_id, request_token, consent="Y"):
     resp.raise_for_status()
     return resp.json()
 
-
-
-def get_holdings(access_token):
-    url = f"{BASE}/portfolio/holdings"
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    }
-    print("📊 Fetching holdings")
-    print("  URL:", url)
-    print("  Headers:", headers)
-    resp = requests.get(url, params={"api_key": API_KEY}, headers=headers)
-    print("  Response:", resp.status_code, resp.text)def fetch_access_token(token_id, request_token):
+def fetch_access_token(token_id, request_token):
     # CORRECT URL: access-token (with hyphen)
     url = f"{BASE}/access-token"
     
@@ -102,17 +90,12 @@ def get_holdings(access_token):
         "apiSecret": API_SECRET
     }
     
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-    }
-    
     print("🔑 Fetching access token")
     print("  URL:", url)
     print("  Params:", params)
     print("  Payload:", payload)
     
-    resp = requests.post(url, params=params, json=payload, headers=headers)
+    resp = requests.post(url, params=params, json=payload, headers=HEADERS_JSON)
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     
@@ -124,31 +107,17 @@ def get_holdings(access_token):
         raise ValueError(f"Could not extract accessToken from response: {data}")
     return access_token
 
-def authorise(token_id, request_token, consent="Y"):
-    # Use the correct authorise endpoint with query parameters
-    url = f"{BASE}/authorise"
-    
-    params = {
-        "api_key": API_KEY,
-        "token_id": token_id,
-        "request_token": request_token,
-        "consent": consent
-    }
-    
+def get_holdings(access_token):
+    url = f"{BASE}/portfolio/holdings"
     headers = {
-        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
-    
-    print("🔑 Authorising session")
+    print("📊 Fetching holdings")
     print("  URL:", url)
-    print("  Params:", params)
-    
-    resp = requests.post(url, params=params, headers=headers)
+    print("  Headers:", headers)
+    resp = requests.get(url, params={"api_key": API_KEY}, headers=headers)
     print("  Response:", resp.status_code, resp.text)
-    resp.raise_for_status()
-    return resp.json()
-
     resp.raise_for_status()
     return resp.json()
 
@@ -162,4 +131,3 @@ def resend_2fa(token_id):
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     return resp.json()
-
