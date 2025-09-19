@@ -41,11 +41,9 @@ def request_otp():
        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 @app.route("/holdings", methods=["POST"])
 def holdings():
     otp = request.form.get("otp")
-    # Get from form first, then session (for robustness)
     token_id = request.form.get("tokenid") or session.get("token_id")
     
     if not token_id:
@@ -53,26 +51,26 @@ def holdings():
     
     try:
         # Validate OTP
-        otp_result = hdfc_investright.validate_otp(token_id, otp)  # Fixed function name
+        otp_result = hdfc_investright.validate_otp(token_id, otp)
         request_token = otp_result.get("requestToken")
+        
         if not request_token:
             return jsonify({"error": "OTP validation failed!"}), 400
 
-        # Authorise
-        auth_result = hdfc_investright.authorise(token_id, request_token)  # Fixed function name
-        if not auth_result.get("callbackUrl"):
+        # Check if already authorized (skip separate authorize call)
+        if not otp_result.get("authorised"):
             return jsonify({"error": "Authorization failed!"}), 400
 
-        # Fetch Access Token
-        access_token = hdfc_investright.fetch_access_token(token_id, request_token)  # Fixed function name
+        # Skip the separate authorise() call - it's already done!
+        # Fetch Access Token directly
+        access_token = hdfc_investright.fetch_access_token(token_id, request_token)
 
         # Get Holdings
         holdings_data = hdfc_investright.get_holdings(access_token)
 
-        # Map to member_id as per JS config (equity → Pradeep, mf → Sanchita)
+        # Map to member_id as per JS config
         mapped = []
         for h in holdings_data:
-            # You may need to adjust this based on holding fields
             if h.get("exchange") in ["BSE", "NSE"]:
                 h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
             else:
@@ -85,6 +83,7 @@ def holdings():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 # Callback route (if needed for OAuth flow)
 @app.route("/api/callback", methods=["GET"])
