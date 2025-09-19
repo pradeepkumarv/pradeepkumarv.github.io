@@ -5,6 +5,14 @@ import os
 app = Flask(__name__)
 app.secret_key = "super-secret-key"  # replace with env var in Render
 
+# Session configuration (for Redis)
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_USE_SIGNER"] = True
+app.config["SESSION_KEY_PREFIX"] = "hdfc:"
+app.config["SESSION_REDIS"] = redis.from_url(os.environ.get("REDIS_URL"))
+Session(app)
+
 API_KEY = os.getenv("HDFC_API_KEY")
 API_SECRET = os.getenv("HDFC_API_SECRET")
 
