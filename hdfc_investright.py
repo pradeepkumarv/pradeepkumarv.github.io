@@ -131,3 +131,57 @@ def resend_2fa(token_id):
     print("  Response:", resp.status_code, resp.text)
     resp.raise_for_status()
     return resp.json()
+    def get_holdings_with_fallback(request_token, token_id):
+    """
+    Try different ways to authenticate with holdings API
+    """
+    url = f"{BASE}/portfolio/holdings"
+    
+    # Different auth methods to try
+    auth_methods = [
+        # Method 1: Authorization header with request_token
+        {
+            "headers": {"Authorization": f"Bearer {request_token}"},
+            "params": {"api_key": API_KEY}
+        },
+        # Method 2: Authorization header without Bearer
+        {
+            "headers": {"Authorization": request_token},
+            "params": {"api_key": API_KEY}
+        },
+        # Method 3: Pass request_token as query parameter
+        {
+            "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"},
+            "params": {"api_key": API_KEY, "request_token": request_token}
+        },
+        # Method 4: Pass both token_id and request_token
+        {
+            "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"},
+            "params": {"api_key": API_KEY, "token_id": token_id, "request_token": request_token}
+        },
+        # Method 5: Custom header
+        {
+            "headers": {"X-Auth-Token": request_token, "User-Agent": "Mozilla/5.0"},
+            "params": {"api_key": API_KEY}
+        }
+    ]
+    
+    print("📊 Trying multiple holdings authentication methods...")
+    
+    for i, method in enumerate(auth_methods, 1):
+        try:
+            print(f"  Method {i}: {method}")
+            resp = requests.get(url, headers=method["headers"], params=method["params"])
+            print(f"  Response {i}: {resp.status_code} - {resp.text[:100]}")
+            
+            if resp.status_code == 200:
+                print(f"✅ Success with method {i}!")
+                return resp.json()
+                
+        except Exception as e:
+            print(f"  Method {i} error: {e}")
+            continue
+    
+    # If all methods fail, raise the last error
+    raise Exception(f"All {len(auth_methods)} authentication methods failed for holdings")
+
