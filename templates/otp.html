@@ -1,15 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Enter OTP</title>
+    <title>Enter OTP - HDFC Securities</title>
+    <meta charset="UTF-8">
 </head>
 <body>
-  <h2>📲 Enter OTP</h2>
-  <form action="/holdings" method="post">
-    <label>OTP:</label><br>
-    <input type="text" name="otp" required><br><br>
-    <button type="submit">Verify OTP & Continue</button>
-  </form>
-  <p>After OTP is verified, you’ll be redirected to HDFC consent/authorisation automatically.</p>
+    <h2>HDFC Securities - Two Factor Authentication</h2>
+    <form method="POST" action="/holdings">
+        <label for="otp">Enter OTP received on your registered device:</label><br>
+        <input type="text" id="otp" name="otp" required maxlength="10" autocomplete="one-time-code"><br><br>
+        {%- if tokenid %}
+        <input type="hidden" name="tokenid" value="{{ tokenid }}">
+        {%- endif %}
+        <button type="submit">Submit</button>
+    </form>
+    <form method="POST" action="/resend-otp" style="margin-top:10px;">
+        <!-- Optionally pass tokenid to resend-otp as well -->
+        {%- if tokenid %}
+        <input type="hidden" name="tokenid" value="{{ tokenid }}">
+        {%- endif %}
+        <button type="submit">Resend OTP</button>
+    </form>
 </body>
 </html>
