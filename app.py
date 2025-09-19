@@ -36,7 +36,6 @@ def request_otp():
         result = hdfc_investright.login_validate(token_id, username, password)
         print("Login validate response:", result)
         
-        # Pass token_id to template
         return render_template("otp.html", tokenid=token_id)
        
     except Exception as e:
@@ -78,9 +77,7 @@ def holdings():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-
-
-    @app.route("/api/callback", methods=["GET", "POST"])
+@app.route("/api/callback", methods=["GET", "POST"])
 def callback():
     print("📞 Callback received!")
     
@@ -137,110 +134,6 @@ def callback():
         </html>
         """, 500
 
-
-# Get session data
-    token_id = session.get("token_id")
-    request_token = session.get("request_token")
-    
-    print(f"Session token_id: {token_id}")
-    print(f"Session request_token: {request_token}")
-    print(f"Callback auth_code: {auth_code}")
-    
-    if not token_id:
-        return f"""
-        <html>
-            <head><title>HDFC Session Error</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>❌ Session Error</h2>
-                <p>Your session has expired. Please start the login process again.</p>
-                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Try Again</a></p>
-            </body>
-        </html>
-        """, 400
-    
-    try:
-        # Method 1: Try to use request_token directly for holdings (skip access_token)
-        print("🔄 Attempting Method 1: Direct holdings with request_token")
-        if request_token:
-            try:
-                holdings_data = hdfc_investright.get_holdings(request_token)
-                return process_holdings_success(holdings_data)
-            except Exception as method1_error:
-                print(f"Method 1 failed: {method1_error}")
-        
-        # Method 2: Try to get access_token using session request_token
-        print("🔄 Attempting Method 2: Fetch access token")
-        if request_token:
-            try:
-                access_token = hdfc_investright.fetch_access_token(token_id, request_token)
-                holdings_data = hdfc_investright.get_holdings(access_token)
-                return process_holdings_success(holdings_data)
-            except Exception as method2_error:
-                print(f"Method 2 failed: {method2_error}")
-        
-        # Method 3: Try with callback auth_code
-        print("🔄 Attempting Method 3: Using callback auth_code")
-        if auth_code:
-            try:
-                access_token = hdfc_investright.fetch_access_token(token_id, auth_code)
-                holdings_data = hdfc_investright.get_holdings(access_token)
-                return process_holdings_success(holdings_data)
-            except Exception as method3_error:
-                print(f"Method 3 failed: {method3_error}")
-        
-        # Method 4: Try without any request token (just token_id)
-        print("🔄 Attempting Method 4: Just token_id")
-        try:
-            access_token = hdfc_investright.fetch_access_token(token_id, None)
-            holdings_data = hdfc_investright.get_holdings(access_token)
-            return process_holdings_success(holdings_data)
-        except Exception as method4_error:
-            print(f"Method 4 failed: {method4_error}")
-        
-        # If all methods fail, return error
-        return f"""
-        <html>
-            <head><title>HDFC Import Error</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>❌ Import Failed</h2>
-                <p>All authentication methods failed. The authorization may be incomplete.</p>
-                <p>Last error: {str(method4_error) if 'method4_error' in locals() else 'Unknown error'}</p>
-                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Try Again</a></p>
-                <details style="margin-top: 20px; text-align: left;">
-                    <summary>Debug Information</summary>
-                    <pre style="background: #f0f0f0; padding: 10px; margin: 10px 0;">
-Token ID: {token_id}
-Request Token: {request_token}
-Auth Code: {auth_code}
-                    </pre>
-                </details>
-            </body>
-        </html>
-        """, 400
-        
-    except Exception as e:
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"💥 Critical error in callback: {e}")
-        print(error_trace)
-        
-        return f"""
-        <html>
-            <head><title>HDFC Critical Error</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>💥 Critical Error</h2>
-                <p>An unexpected error occurred: {str(e)}</p>
-                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Start Over</a></p>
-                <details style="margin-top: 20px; text-align: left;">
-                    <summary>Error Details</summary>
-                    <pre style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px;">
-{error_trace}
-                    </pre>
-                </details>
-            </body>
-        </html>
-        """, 500
-
 def process_holdings_success(holdings_data):
     """
     Helper function to process successful holdings retrieval
@@ -252,7 +145,7 @@ def process_holdings_success(holdings_data):
         if 'data' in holdings_data:
             holdings = holdings_data['data']
         else:
-            holdings = [holdings_data]  # Single holding wrapped in list
+            holdings = [holdings_data]
     elif isinstance(holdings_data, list):
         holdings = holdings_data
     else:
@@ -266,17 +159,17 @@ def process_holdings_success(holdings_data):
         try:
             # Determine investment type and assign member
             if h.get("exchange") in ["BSE", "NSE"]:
-                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"
                 h["member_name"] = "Pradeep Kumar V"
                 h["investment_type"] = "equity"
                 member_counts["equity"] += 1
             elif h.get("asset_class") == "MUTUAL_FUND" or "folio" in h:
-                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita Pradeep  
+                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"
                 h["member_name"] = "Sanchita Pradeep"
                 h["investment_type"] = "mutualFunds"
                 member_counts["mf"] += 1
             else:
-                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Default to Pradeep
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"
                 h["member_name"] = "Pradeep Kumar V"
                 h["investment_type"] = "other"
                 member_counts["other"] += 1
@@ -285,7 +178,6 @@ def process_holdings_success(holdings_data):
             
         except Exception as mapping_error:
             print(f"⚠️ Error mapping holding: {mapping_error}")
-            # Still add the holding even if mapping fails
             h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"
             h["member_name"] = "Pradeep Kumar V"
             h["investment_type"] = "unknown"
