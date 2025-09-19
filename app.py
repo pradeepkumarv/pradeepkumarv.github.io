@@ -78,7 +78,7 @@ def holdings():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-# Handle the OAuth callback from HDFC
+
 @app.route("/api/callback", methods=["GET", "POST"])
 def callback():
     print("📞 Callback received!")
@@ -90,20 +90,33 @@ def callback():
         return "Session expired", 400
     
     try:
-        # Step 1: Authorize (this should work now)
-        print("🔄 Step 1: Authorizing...")
-        auth_result = hdfc_investright.authorise(token_id, request_token, "Y")
-        print("Authorization result:", auth_result)
+        # SKIP Step 1: Authorization is already done (authorised=true in OTP response)
+        print("✅ Authorization already completed during OTP validation")
         
-        # Step 2: Get access token (using corrected endpoint and payload)
-        print("🔄 Step 2: Getting access token...")
-        access_token = hdfc_investright.fetch_access_token(token_id, request_token)
-        print("Access token received:", access_token[:50] + "..." if access_token else None)
+        # SKIP Step 2: Try using request_token directly as access_token
+        print("🔄 Using request_token directly for holdings...")
+        try:
+            holdings_data = hdfc_investright.get_holdings(request_token)
+            return process_holdings_success(holdings_data)
+        except Exception as direct_error:
+            print(f"Direct request_token failed: {direct_error}")
         
-        # Step 3: Get holdings
-        print("🔄 Step 3: Getting holdings...")
-        holdings_data = hdfc_investright.get_holdings(access_token)
+        # Step 3: If direct doesn't work, try getting access_token (corrected endpoint)
+        print("🔄 Attempting to get access_token...")
+        try:
+            access_token = hdfc_investright.fetch_access_token(token_id, request_token)
+            print("Access token received:", access_token[:50] + "..." if access_token else None)
+            
+            # Get holdings with access_token
+            holdings_data = hdfc_investright.get_holdings(access_token)
+            return process_holdings_success(holdings_data)
+            
+        except Exception as token_error:
+            print(f"Access token method failed: {token_error}")
         
+        # Step 4: Last resort - try holdings with different auth headers
+        print("🔄 Trying different authorization methods...")
+        holdings_data = hdfc_investright.get_holdings_with_fallback(request_token, token_id)
         return process_holdings_success(holdings_data)
         
     except Exception as e:
@@ -122,7 +135,6 @@ def callback():
             </body>
         </html>
         """, 500
-
 
 
 # Get session data
