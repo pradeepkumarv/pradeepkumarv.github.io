@@ -41,6 +41,7 @@ def request_otp():
        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 @app.route("/holdings", methods=["POST"])
 def holdings():
     otp = request.form.get("otp")
@@ -52,29 +53,56 @@ def holdings():
     try:
         # Validate OTP
         otp_result = hdfc_investright.validate_otp(token_id, otp)
-        request_token = otp_result.get("requestToken")
         
-        if not request_token:
+        if not otp_result.get("authorised"):
             return jsonify({"error": "OTP validation failed!"}), 400
 
-        # Check if already authorized (skip separate authorize call)
-        if not otp_result.get("authorised"):
-            return jsonify({"error": "Authorization failed!"}), 400
+        # Get callback URL for redirect
+        callback_url = otp_result.get("callbackUrl")
+        if not callback_url:
+            return jsonify({"error": "No callback URL received"}), 400
 
-        # Skip the separate authorise() call - it's already done!
-        # Fetch Access Token directly
+        # Store request_token in session for use in callback
+        request_token = otp_result.get("requestToken")
+        session["request_token"] = request_token
+
+        # Return redirect URL to frontend
+        return jsonify({
+            "status": "redirect_required",
+            "redirect_url": callback_url,
+            "message": "Please complete authorization"
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+# Handle the OAuth callback
+@app.route("/api/callback", methods=["GET"])
+def callback():
+    # Extract authorization code from callback
+    auth_code = request.args.get("code") or request.args.get("request_token")
+    token_id = session.get("token_id")
+    request_token = session.get("request_token")
+    
+    if not token_id or not request_token:
+        return jsonify({"error": "Session expired"}), 400
+    
+    try:
+        # Now try to get access token with the callback data
         access_token = hdfc_investright.fetch_access_token(token_id, request_token)
-
+        
         # Get Holdings
         holdings_data = hdfc_investright.get_holdings(access_token)
 
-        # Map to member_id as per JS config
+        # Map to member_id
         mapped = []
         for h in holdings_data:
             if h.get("exchange") in ["BSE", "NSE"]:
-                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep
             else:
-                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita Pradeep
+                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita
             mapped.append(h)
 
         return jsonify({"status": "success", "data": mapped})
