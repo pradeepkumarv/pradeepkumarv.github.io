@@ -81,24 +81,51 @@ def holdings():
 # Handle the OAuth callback from HDFC
 @app.route("/api/callback", methods=["GET", "POST"])
 def callback():
-    """
-    Handle HDFC Securities OAuth callback after user authorization
-    """
     print("📞 Callback received!")
-    print(f"Request method: {request.method}")
-    print(f"Request args: {dict(request.args)}")
-    print(f"Request form: {dict(request.form)}")
     
-    # Extract potential authorization data from callback
-    auth_code = (
-        request.args.get("code") or 
-        request.args.get("request_token") or 
-        request.args.get("authorization_code") or
-        request.form.get("code") or
-        request.form.get("request_token")
-    )
+    token_id = session.get("token_id")
+    request_token = session.get("request_token")
     
-    # Get session data
+    if not token_id or not request_token:
+        return "Session expired", 400
+    
+    try:
+        # Step 1: Authorize (this should work now)
+        print("🔄 Step 1: Authorizing...")
+        auth_result = hdfc_investright.authorise(token_id, request_token, "Y")
+        print("Authorization result:", auth_result)
+        
+        # Step 2: Get access token (using corrected endpoint and payload)
+        print("🔄 Step 2: Getting access token...")
+        access_token = hdfc_investright.fetch_access_token(token_id, request_token)
+        print("Access token received:", access_token[:50] + "..." if access_token else None)
+        
+        # Step 3: Get holdings
+        print("🔄 Step 3: Getting holdings...")
+        holdings_data = hdfc_investright.get_holdings(access_token)
+        
+        return process_holdings_success(holdings_data)
+        
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"💥 Error in callback: {e}")
+        print(error_trace)
+        
+        return f"""
+        <html>
+            <body>
+                <h2>❌ Error</h2>
+                <p>Failed to import holdings: {str(e)}</p>
+                <p><a href="/">Try Again</a></p>
+                <pre>{error_trace}</pre>
+            </body>
+        </html>
+        """, 500
+
+
+
+# Get session data
     token_id = session.get("token_id")
     request_token = session.get("request_token")
     
