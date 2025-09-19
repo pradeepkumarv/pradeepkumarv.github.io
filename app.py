@@ -79,7 +79,8 @@ def holdings():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/callback", methods=["GET", "POST"])
+
+    @app.route("/api/callback", methods=["GET", "POST"])
 def callback():
     print("📞 Callback received!")
     
@@ -93,7 +94,7 @@ def callback():
         # SKIP Step 1: Authorization is already done (authorised=true in OTP response)
         print("✅ Authorization already completed during OTP validation")
         
-        # SKIP Step 2: Try using request_token directly as access_token
+        # Step 2: Try using request_token directly for holdings
         print("🔄 Using request_token directly for holdings...")
         try:
             holdings_data = hdfc_investright.get_holdings(request_token)
@@ -101,7 +102,7 @@ def callback():
         except Exception as direct_error:
             print(f"Direct request_token failed: {direct_error}")
         
-        # Step 3: If direct doesn't work, try getting access_token (corrected endpoint)
+        # Step 3: Try getting access_token (corrected endpoint)
         print("🔄 Attempting to get access_token...")
         try:
             access_token = hdfc_investright.fetch_access_token(token_id, request_token)
@@ -114,8 +115,8 @@ def callback():
         except Exception as token_error:
             print(f"Access token method failed: {token_error}")
         
-        # Step 4: Last resort - try holdings with different auth headers
-        print("🔄 Trying different authorization methods...")
+        # Step 4: Last resort - try different auth methods
+        print("🔄 Trying fallback authentication methods...")
         holdings_data = hdfc_investright.get_holdings_with_fallback(request_token, token_id)
         return process_holdings_success(holdings_data)
         
