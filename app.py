@@ -30,35 +30,45 @@ def request_otp():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 @app.route("/holdings", methods=["POST"])
 def holdings():
     otp = request.form.get("otp")
-
-    token_id = session.get("token_id")
-    username = session.get("username")
-    password = session.get("password")
-
-    if not (token_id and username and password):
+    token_id = session.get("tokenid")
+    if not token_id:
         return jsonify({"error": "Session expired. Please login again."}), 401
-
     try:
-        # Step 4: validate OTP
-        otp_result = hdfc_investright.validate_otp(API_KEY, token_id, otp)
-        print("✅ OTP validation result:", otp_result)
-
+        # Validate OTP
+        otp_result = hdfcinvestright.validate_otp(token_id, otp)
         request_token = otp_result.get("requestToken")
         if not request_token:
-            return jsonify({"error": "No requestToken in OTP response"}), 400
+            return jsonify({"error": "OTP validation failed!"}), 400
 
-        # Step 5: redirect to HDFC authorise page
-        authorise_url = hdfc_investright.get_authorise_url(API_KEY, token_id, request_token)
-        return redirect(authorise_url)
+        # Authorise
+        auth_result = hdfcinvestright.authorise(token_id, request_token)
+        if not auth_result.get("callbackUrl"):
+            return jsonify({"error": "Authorization failed!"}), 400
 
+        # Fetch Access Token
+        access_token = hdfcinvestright.fetch_access_token(token_id, request_token)
+
+        # Get Holdings
+        holdings = hdfcinvestright.get_holdings(access_token)
+
+        # Map to member_id as per JS config (equity → Pradeep, mf → Sanchita)
+        mapped = []
+        for h in holdings:
+            # You may need to adjust this based on holding fields
+            if h.get("exchange") in ["BSE", "NSE"]:
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
+            else:
+                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita Pradeep
+            mapped.append(h)
+
+        return jsonify({"status": "success", "data": mapped})
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        import traceback; traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 # ✅ New callback route
