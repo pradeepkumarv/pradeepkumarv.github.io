@@ -26,7 +26,9 @@ def request_otp():
         result = hdfc_investright.login_validate(token_id, username, password)
         print("Login validate response:", result)
 
-        return render_template("otp.html")
+        session['tokenid'] = tokenid
+        return render_template("otp.html", tokenid=tokenid) 
+       
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
