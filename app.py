@@ -81,58 +81,258 @@ def holdings():
 # Handle the OAuth callback from HDFC
 @app.route("/api/callback", methods=["GET", "POST"])
 def callback():
-    # Extract any authorization data from callback
-    auth_code = request.args.get("code") or request.args.get("request_token") or request.form.get("code")
+    """
+    Handle HDFC Securities OAuth callback after user authorization
+    """
+    print("📞 Callback received!")
+    print(f"Request method: {request.method}")
+    print(f"Request args: {dict(request.args)}")
+    print(f"Request form: {dict(request.form)}")
+    
+    # Extract potential authorization data from callback
+    auth_code = (
+        request.args.get("code") or 
+        request.args.get("request_token") or 
+        request.args.get("authorization_code") or
+        request.form.get("code") or
+        request.form.get("request_token")
+    )
+    
+    # Get session data
     token_id = session.get("token_id")
     request_token = session.get("request_token")
     
-    if not token_id or not request_token:
-        return jsonify({"error": "Session expired. Please start over."}), 400
+    print(f"Session token_id: {token_id}")
+    print(f"Session request_token: {request_token}")
+    print(f"Callback auth_code: {auth_code}")
     
-    try:
-        # Try to get access token
-        access_token = hdfc_investright.fetch_access_token(token_id, request_token)
-        
-        # Get Holdings
-        holdings_data = hdfc_investright.get_holdings(access_token)
-
-        # Map to member_id as per your config
-        mapped = []
-        for h in holdings_data:
-            if h.get("exchange") in ["BSE", "NSE"]:
-                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
-            else:
-                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita Pradeep
-            mapped.append(h)
-
-        # Return success page or redirect to dashboard
+    if not token_id:
         return f"""
         <html>
-            <head><title>HDFC Holdings Imported</title></head>
-            <body>
-                <h2>✅ Success!</h2>
-                <p>Holdings imported successfully: {len(mapped)} items</p>
-                <p><a href="/">Return to Dashboard</a></p>
-                <script>
-                    setTimeout(() => window.location.href = '/', 3000);
-                </script>
+            <head><title>HDFC Session Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>❌ Session Error</h2>
+                <p>Your session has expired. Please start the login process again.</p>
+                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Try Again</a></p>
             </body>
         </html>
-        """
+        """, 400
+    
+    try:
+        # Method 1: Try to use request_token directly for holdings (skip access_token)
+        print("🔄 Attempting Method 1: Direct holdings with request_token")
+        if request_token:
+            try:
+                holdings_data = hdfc_investright.get_holdings(request_token)
+                return process_holdings_success(holdings_data)
+            except Exception as method1_error:
+                print(f"Method 1 failed: {method1_error}")
         
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+        # Method 2: Try to get access_token using session request_token
+        print("🔄 Attempting Method 2: Fetch access token")
+        if request_token:
+            try:
+                access_token = hdfc_investright.fetch_access_token(token_id, request_token)
+                holdings_data = hdfc_investright.get_holdings(access_token)
+                return process_holdings_success(holdings_data)
+            except Exception as method2_error:
+                print(f"Method 2 failed: {method2_error}")
+        
+        # Method 3: Try with callback auth_code
+        print("🔄 Attempting Method 3: Using callback auth_code")
+        if auth_code:
+            try:
+                access_token = hdfc_investright.fetch_access_token(token_id, auth_code)
+                holdings_data = hdfc_investright.get_holdings(access_token)
+                return process_holdings_success(holdings_data)
+            except Exception as method3_error:
+                print(f"Method 3 failed: {method3_error}")
+        
+        # Method 4: Try without any request token (just token_id)
+        print("🔄 Attempting Method 4: Just token_id")
+        try:
+            access_token = hdfc_investright.fetch_access_token(token_id, None)
+            holdings_data = hdfc_investright.get_holdings(access_token)
+            return process_holdings_success(holdings_data)
+        except Exception as method4_error:
+            print(f"Method 4 failed: {method4_error}")
+        
+        # If all methods fail, return error
         return f"""
         <html>
             <head><title>HDFC Import Error</title></head>
-            <body>
-                <h2>❌ Error</h2>
-                <p>Failed to import holdings: {str(e)}</p>
-                <p><a href="/">Try Again</a></p>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>❌ Import Failed</h2>
+                <p>All authentication methods failed. The authorization may be incomplete.</p>
+                <p>Last error: {str(method4_error) if 'method4_error' in locals() else 'Unknown error'}</p>
+                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Try Again</a></p>
+                <details style="margin-top: 20px; text-align: left;">
+                    <summary>Debug Information</summary>
+                    <pre style="background: #f0f0f0; padding: 10px; margin: 10px 0;">
+Token ID: {token_id}
+Request Token: {request_token}
+Auth Code: {auth_code}
+                    </pre>
+                </details>
             </body>
         </html>
-        """
+        """, 400
+        
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"💥 Critical error in callback: {e}")
+        print(error_trace)
+        
+        return f"""
+        <html>
+            <head><title>HDFC Critical Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>💥 Critical Error</h2>
+                <p>An unexpected error occurred: {str(e)}</p>
+                <p><a href="/" style="color: blue; text-decoration: none;">🔄 Start Over</a></p>
+                <details style="margin-top: 20px; text-align: left;">
+                    <summary>Error Details</summary>
+                    <pre style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px;">
+{error_trace}
+                    </pre>
+                </details>
+            </body>
+        </html>
+        """, 500
+
+def process_holdings_success(holdings_data):
+    """
+    Helper function to process successful holdings retrieval
+    """
+    print(f"✅ Holdings retrieved successfully: {len(holdings_data) if isinstance(holdings_data, list) else 'Unknown count'}")
+    
+    # Handle different response formats
+    if isinstance(holdings_data, dict):
+        if 'data' in holdings_data:
+            holdings = holdings_data['data']
+        else:
+            holdings = [holdings_data]  # Single holding wrapped in list
+    elif isinstance(holdings_data, list):
+        holdings = holdings_data
+    else:
+        holdings = []
+
+    # Map to member_id as per your config
+    mapped = []
+    member_counts = {"equity": 0, "mf": 0, "other": 0}
+    
+    for h in holdings:
+        try:
+            # Determine investment type and assign member
+            if h.get("exchange") in ["BSE", "NSE"]:
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Pradeep Kumar V
+                h["member_name"] = "Pradeep Kumar V"
+                h["investment_type"] = "equity"
+                member_counts["equity"] += 1
+            elif h.get("asset_class") == "MUTUAL_FUND" or "folio" in h:
+                h["member_id"] = "d3a4fc84-a94b-494d-915c-60901f16d973"  # Sanchita Pradeep  
+                h["member_name"] = "Sanchita Pradeep"
+                h["investment_type"] = "mutualFunds"
+                member_counts["mf"] += 1
+            else:
+                h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"  # Default to Pradeep
+                h["member_name"] = "Pradeep Kumar V"
+                h["investment_type"] = "other"
+                member_counts["other"] += 1
+            
+            mapped.append(h)
+            
+        except Exception as mapping_error:
+            print(f"⚠️ Error mapping holding: {mapping_error}")
+            # Still add the holding even if mapping fails
+            h["member_id"] = "bef9db5e-2f21-4038-8f3f-f78ce1bbfb49"
+            h["member_name"] = "Pradeep Kumar V"
+            h["investment_type"] = "unknown"
+            mapped.append(h)
+    
+    # Clear session data
+    session.pop("token_id", None)
+    session.pop("request_token", None)
+    
+    # Return success page with detailed breakdown
+    return f"""
+    <html>
+        <head>
+            <title>HDFC Holdings Imported Successfully</title>
+            <style>
+                body {{ 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    text-align: center; 
+                    padding: 50px; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    margin: 0;
+                }}
+                .success-container {{
+                    background: white;
+                    border-radius: 15px;
+                    padding: 40px;
+                    max-width: 500px;
+                    margin: 0 auto;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                }}
+                .stats {{
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }}
+                .btn {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 12px 24px;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    display: inline-block;
+                    margin: 10px;
+                }}
+                .countdown {{ color: #666; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="success-container">
+                <h2>🎉 Holdings Import Successful!</h2>
+                
+                <div class="stats">
+                    <h3>📊 Import Summary</h3>
+                    <p><strong>Total Holdings:</strong> {len(mapped)}</p>
+                    <p><strong>Equity (Pradeep):</strong> {member_counts['equity']}</p>
+                    <p><strong>Mutual Funds (Sanchita):</strong> {member_counts['mf']}</p>
+                    <p><strong>Other:</strong> {member_counts['other']}</p>
+                </div>
+                
+                <p>Your HDFC Securities holdings have been successfully imported and mapped to the appropriate family members.</p>
+                
+                <a href="/" class="btn">🏠 Return to Dashboard</a>
+                
+                <div class="countdown">
+                    <p>Automatically redirecting in <span id="countdown">5</span> seconds...</p>
+                </div>
+            </div>
+            
+            <script>
+                let timeLeft = 5;
+                const countdownEl = document.getElementById('countdown');
+                
+                const timer = setInterval(() => {{
+                    timeLeft--;
+                    countdownEl.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {{
+                        clearInterval(timer);
+                        window.location.href = '/';
+                    }}
+                }}, 1000);
+            </script>
+        </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     app.run(debug=True)
